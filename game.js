@@ -114,3 +114,137 @@ function drawPipes() {
         ctx.fillStyle = "#00d800";
         ctx.fillRect(p.x - 2, p.y, p.w + 4, 10);
         ctx.strokeStyle = "#000";
+        ctx.strokeRect(p.x, p.y, p.w, p.h);
+    });
+}
+
+function drawUI() {
+    // Hiển thị số coin trên góc trái
+    ctx.fillStyle = "#f8d800";
+    ctx.font = "bold 14px sans-serif";
+    ctx.fillText("🪙 COINS: " + coins, 10, 20);
+
+    // Đồng xu nảy lên
+    if (coinEffect.active) {
+        ctx.fillStyle = "#f8d800";
+        ctx.beginPath();
+        ctx.arc(coinEffect.x, coinEffect.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+// Cập nhật logic game
+function update() {
+    if (keys.left && mario.x > 0) mario.x -= mario.speed;
+    if (keys.right && mario.x < canvas.width - mario.w) mario.x += mario.speed;
+
+    mario.dy += mario.gravity;
+    mario.y += mario.dy;
+
+    // Sàn nhà
+    if (mario.y + mario.h >= 160) {
+        mario.y = 160 - mario.h;
+        mario.dy = 0;
+        mario.isGrounded = true;
+    }
+
+    // Va chạm với khối ? (Cụng đầu lấy coin)
+    blocks.forEach(b => {
+        if (mario.x < b.x + b.w && mario.x + mario.w > b.x &&
+            mario.y <= b.y + b.h && mario.y >= b.y && mario.dy < 0) {
+            mario.dy = 1; // Bật ngược xuống
+            if (b.type === "question" && !b.hit) {
+                b.hit = true;
+                coins += 1; // Cộng tiền
+                coinEffect = { x: b.x + 10, y: b.y - 5, dy: -3, active: true };
+            }
+        }
+    });
+
+    // Cập nhật vị trí hiệu ứng coin
+    if (coinEffect.active) {
+        coinEffect.y += coinEffect.dy;
+        coinEffect.dy += 0.2;
+        if (coinEffect.dy > 2) coinEffect.active = false;
+    }
+
+    // Logic cây ăn thịt trồi lên mỗi 10 giây (600 frames = ~10s)
+    piranha.timer++;
+    if (piranha.timer % 600 < 180) { // Hiện trong ~3 giây mỗi 10 giây
+        piranha.visible = true;
+        piranha.y = 102; // Trồi lên khỏi ống
+    } else {
+        piranha.visible = false;
+        piranha.y = 120; // Ẩn vào ống
+    }
+
+    // Va chạm cây ăn thịt
+    if (piranha.visible &&
+        mario.x < piranha.x + piranha.w && mario.x + mario.w > piranha.x &&
+        mario.y < piranha.y + piranha.h && mario.y + mario.h > piranha.y) {
+        mario.x = 40; mario.y = 130; // Chết, reset vị trí
+    }
+
+    // Va chạm kẻ địch Goomba
+    enemies.forEach(e => {
+        if (!e.alive) return;
+        e.x += e.dir * 0.5;
+        if (e.x <= 130 || e.x >= 240) e.dir *= -1;
+
+        if (mario.x < e.x + e.w && mario.x + mario.w > e.x &&
+            mario.y + mario.h >= e.y && mario.y + mario.h <= e.y + 8 && mario.dy > 0) {
+            e.alive = false;
+            mario.dy = mario.jumpPower * 0.6;
+        } else if (mario.x < e.x + e.w && mario.x + mario.w > e.x &&
+                   mario.y < e.y + e.h && mario.y + mario.h > e.y) {
+            mario.x = 40; mario.y = 130;
+        }
+    });
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawGround();
+    drawBlocks();
+    drawPiranha();
+    drawPipes();
+    enemies.forEach(drawGoomba);
+    drawMario();
+    drawUI();
+}
+
+function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+// Điều khiển
+window.addEventListener("keydown", e => {
+    if (e.key === "ArrowLeft" || e.key === "a") keys.left = true;
+    if (e.key === "ArrowRight" || e.key === "d") keys.right = true;
+    if ((e.key === "ArrowUp" || e.key === " " || e.key === "w") && mario.isGrounded) {
+        mario.dy = mario.jumpPower; mario.isGrounded = false;
+    }
+});
+
+window.addEventListener("keyup", e => {
+    if (e.key === "ArrowLeft" || e.key === "a") keys.left = false;
+    if (e.key === "ArrowRight" || e.key === "d") keys.right = false;
+});
+
+function setupTouchButton(id, onPress, onRelease) {
+    const btn = document.getElementById(id);
+    btn.addEventListener("touchstart", e => { e.preventDefault(); onPress(); });
+    btn.addEventListener("touchend", e => { e.preventDefault(); if (onRelease) onRelease(); });
+    btn.addEventListener("mousedown", onPress);
+    btn.addEventListener("mouseup", onRelease);
+}
+
+setupTouchButton("leftBtn", () => keys.left = true, () => keys.left = false);
+setupTouchButton("rightBtn", () => keys.right = true, () => keys.right = false);
+setupTouchButton("jumpBtn", () => {
+    if (mario.isGrounded) { mario.dy = mario.jumpPower; mario.isGrounded = false; }
+});
+
+gameLoop();
