@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Mini Mario</title>
+    <style>
+        * { box-sizing: border-box; touch-action: manipulation; user-select: none; }
+        body { margin: 0; padding: 10px; background: #5c94fc; text-align: center; font-family: Arial, sans-serif; color: #fff; }
+        h2 { margin: 5px 0 10px 0; text-shadow: 2px 2px 0 #000; }
+        canvas { background: #5c94fc; display: block; margin: 0 auto; border-bottom: 15px solid #e75910; box-shadow: 0 4px 10px rgba(0,0,0,0.3); max-width: 100%; }
+        .controls { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 360px; margin: 15px auto 0 auto; }
+        .d-pad { display: flex; gap: 10px; }
+        .btn { width: 65px; height: 55px; background: #f8d800; color: #000; border: 3px solid #000; font-weight: bold; font-size: 20px; border-radius: 10px; box-shadow: 0 4px 0 #000; cursor: pointer; }
+        .btn:active { transform: translateY(4px); box-shadow: 0 0 0 #000; background: #d4b800; }
+        .btn-jump { width: 80px; background: #e75910; color: #fff; }
+        .btn-jump:active { background: #b54007; }
+    </style>
+</head>
+<body>
+    <h2>MINI MARIO</h2>
+    <canvas id="game" width="360" height="200"></canvas>
+    <div class="controls">
+        <div class="d-pad">
+            <button class="btn" id="leftBtn">◄</button>
+            <button class="btn" id="rightBtn">►</button>
+        </div>
+        <button class="btn btn-jump" id="jumpBtn">NHẢY</button>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
