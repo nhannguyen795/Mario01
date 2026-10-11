@@ -10,10 +10,9 @@
         h2 { margin: 5px 0 10px 0; text-shadow: 2px 2px 0 #000; }
         canvas { background: #5c94fc; display: block; margin: 0 auto; border-bottom: 15px solid #e75910; box-shadow: 0 4px 10px rgba(0,0,0,0.3); max-width: 100%; }
         
-        /* Màn hình Menu chọn độ khó */
-        #menu { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(92, 148, 252, 0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; }
-        #menu h1 { text-shadow: 3px 3px 0 #000; margin-bottom: 20px; }
-        .menu-btn { width: 200px; padding: 12px; margin: 8px; font-size: 18px; font-weight: bold; border: 3px solid #000; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 0 #000; }
+        #menu { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(92, 148, 252, 0.98); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; }
+        #menu h1 { text-shadow: 3px 3px 0 #000; margin-bottom: 15px; }
+        .menu-btn { width: 220px; padding: 12px; margin: 8px; font-size: 16px; font-weight: bold; border: 3px solid #000; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 0 #000; }
         .btn-easy { background: #00d800; color: #000; }
         .btn-normal { background: #f8d800; color: #000; }
         .btn-hard { background: #e75910; color: #fff; }
@@ -32,10 +31,10 @@
     <div id="menu">
         <h1>MINI MARIO</h1>
         <p>CHỌN ĐỘ KHÓ:</p>
-        <button class="menu-btn btn-easy" onclick="startGame('easy')">EASY (Dễ)</button>
-        <button class="menu-btn btn-normal" onclick="startGame('normal')">NORMAL (Thường)</button>
-        <button class="menu-btn btn-hard" onclick="startGame('hard')">HARD (Khó)</button>
-        <button class="menu-btn btn-impossible" onclick="startGame('impossible')">IMPOSSIBLE (Ác mộng)</button>
+        <button class="menu-btn btn-easy" onclick="window.initGame('easy')">EASY (Dễ)</button>
+        <button class="menu-btn btn-normal" onclick="window.initGame('normal')">NORMAL (Thường)</button>
+        <button class="menu-btn btn-hard" onclick="window.initGame('hard')">HARD (Khó)</button>
+        <button class="menu-btn btn-impossible" onclick="window.initGame('impossible')">IMPOSSIBLE (Ác mộng)</button>
     </div>
 
     <h2>MINI MARIO</h2>
