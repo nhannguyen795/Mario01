@@ -10,10 +10,8 @@ let mario = {
 };
 
 let coins = 0;
-let cameraX = 0; // Tọa độ cuộn màn hình
+let cameraX = 0;
 let keys = { left: false, right: false };
-
-// Bản đồ dài hơn (chiều rộng lên tới 1200 pixel)
 let worldWidth = 1200;
 
 let blocks = [
@@ -22,8 +20,7 @@ let blocks = [
     { x: 140, y: 100, w: 20, h: 20, type: "brick" },
     { x: 350, y: 90, w: 20, h: 20, type: "question", hit: false },
     { x: 550, y: 100, w: 20, h: 20, type: "question", hit: false },
-    { x: 800, y: 80, w: 20, h: 20, type: "question", hit: false },
-    { x: 820, y: 80, w: 20, h: 20, type: "brick" }
+    { x: 800, y: 80, w: 20, h: 20, type: "question", hit: false }
 ];
 
 let pipes = [
@@ -47,26 +44,17 @@ let enemies = [
 
 let coinEffect = { x: 0, y: 0, dy: 0, active: false };
 
-function startGame(mode) {
+window.initGame = function(mode) {
     difficulty = mode;
     gameStarted = true;
-    document.getElementById("menu").style.display = "none";
+    const menuEl = document.getElementById("menu");
+    if (menuEl) menuEl.style.display = "none";
 
-    // Thiết lập độ khó
-    if (mode === "easy") {
-        mario.speed = 3;
-        enemies.forEach(e => e.speedFactor = 0.5);
-    } else if (mode === "normal") {
-        mario.speed = 2.5;
-    } else if (mode === "hard") {
-        mario.speed = 2.2;
-        mario.gravity = 0.5;
-    } else if (mode === "impossible") {
-        mario.speed = 2;
-        mario.gravity = 0.55;
-        mario.jumpPower = -8;
-    }
-}
+    if (mode === "easy") mario.speed = 3;
+    else if (mode === "normal") mario.speed = 2.5;
+    else if (mode === "hard") { mario.speed = 2.2; mario.gravity = 0.5; }
+    else if (mode === "impossible") { mario.speed = 2; mario.gravity = 0.55; mario.jumpPower = -8; }
+};
 
 function drawGround() {
     const groundY = 160;
@@ -98,7 +86,7 @@ function drawMario() {
 
 function drawGoomba(e) {
     if (!e.alive) return;
-    ctx.fillStyle = (difficulty === "impossible") ? "#000" : "#a81000"; // Impossible đổi màu kẻ địch thành đen nguy hiểm
+    ctx.fillStyle = (difficulty === "impossible") ? "#000" : "#a81000";
     ctx.fillRect(e.x + 2, e.y, 12, 10);
     ctx.fillStyle = "#fc9838";
     ctx.fillRect(e.x, e.y + 10, 16, 6);
@@ -132,164 +120,4 @@ function drawBlocks() {
             ctx.fillRect(b.x, b.y, b.w, b.h);
             ctx.strokeStyle = "#000";
             ctx.strokeRect(b.x, b.y, b.w, b.h);
-            ctx.fillStyle = "#000";
-            ctx.font = "bold 12px sans-serif";
-            ctx.fillText(b.hit ? "" : "?", b.x + 6, b.y + 15);
-        }
-    });
-}
-
-function drawPipes() {
-    pipes.forEach(p => {
-        ctx.fillStyle = "#00a800";
-        ctx.fillRect(p.x, p.y, p.w, p.h);
-        ctx.fillStyle = "#00d800";
-        ctx.fillRect(p.x - 2, p.y, p.w + 4, 10);
-        ctx.strokeStyle = "#000";
-        ctx.strokeRect(p.x, p.y, p.w, p.h);
-    });
-}
-
-function drawUI() {
-    ctx.fillStyle = "#f8d800";
-    ctx.font = "bold 14px sans-serif";
-    ctx.fillText("🪙 COINS: " + coins + " | MODE: " + difficulty.toUpperCase(), 15, 20);
-
-    if (coinEffect.active) {
-        ctx.fillStyle = "#f8d800";
-        ctx.beginPath();
-        ctx.arc(coinEffect.x, coinEffect.y, 5, 0, Math.PI * 2);
-        ctx.fill();
-    }
-}
-
-function update() {
-    if (!gameStarted) return;
-
-    if (keys.left && mario.x > 0) mario.x -= mario.speed;
-    if (keys.right && mario.x < worldWidth - mario.w) mario.x += mario.speed;
-
-    // Cuộn màn hình (Camera đi theo Mario)
-    cameraX = mario.x - canvas.width / 2;
-    if (cameraX < 0) cameraX = 0;
-    if (cameraX > worldWidth - canvas.width) cameraX = worldWidth - canvas.width;
-
-    mario.dy += mario.gravity;
-    mario.y += mario.dy;
-
-    if (mario.y + mario.h >= 160) {
-        mario.y = 160 - mario.h;
-        mario.dy = 0;
-        mario.isGrounded = true;
-    }
-
-    // Va chạm khối gạch / hỏi chấm
-    blocks.forEach(b => {
-        if (mario.x < b.x + b.w && mario.x + mario.w > b.x &&
-            mario.y <= b.y + b.h && mario.y >= b.y && mario.dy < 0) {
-            mario.dy = 1;
-            if (b.type === "question" && !b.hit) {
-                b.hit = true;
-                coins += 1;
-                coinEffect = { x: b.x + 10, y: b.y - 5, dy: -3, active: true };
-            }
-        }
-    });
-
-    if (coinEffect.active) {
-        coinEffect.y += coinEffect.dy;
-        coinEffect.dy += 0.2;
-        if (coinEffect.dy > 2) coinEffect.active = false;
-    }
-
-    // Xử lý cây ăn thịt (10s trồi lên 1 lần, tùy độ khó thời gian ẩn hiện có thể nhanh hơn)
-    let hideDuration = (difficulty === "impossible") ? 120 : 420; 
-    piranhas.forEach(p => {
-        p.timer++;
-        if (p.timer % 600 < 180) {
-            p.visible = true;
-            p.y = 102;
-        } else {
-            p.visible = false;
-            p.y = 120;
-        }
-
-        if (p.visible &&
-            mario.x < p.x + p.w && mario.x + mario.w > p.x &&
-            mario.y < p.y + p.h && mario.y + mario.h > p.y) {
-            mario.x = 40; mario.y = 130; // Chết -> Reset về đầu
-        }
-    });
-
-    // Xử lý kẻ địch
-    enemies.forEach(e => {
-        if (!e.alive) return;
-        let speed = (difficulty === "easy") ? 0.3 : (difficulty === "hard" || difficulty === "impossible") ? 1 : 0.6;
-        e.x += e.dir * speed;
-        if (e.x <= 150 || e.x >= worldWidth - 100) e.dir *= -1;
-
-        if (mario.x < e.x + e.w && mario.x + mario.w > e.x &&
-            mario.y + mario.h >= e.y && mario.y + mario.h <= e.y + 8 && mario.dy > 0) {
-            e.alive = false;
-            mario.dy = mario.jumpPower * 0.6;
-        } else if (mario.x < e.x + e.w && mario.x + mario.w > e.x &&
-                   mario.y < e.y + e.h && mario.y + mario.h > e.y) {
-            mario.x = 40; mario.y = 130;
-        }
-    });
-}
-
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    ctx.save();
-    ctx.translate(-cameraX, 0); // Dịch chuyển màn hình theo camera
-
-    drawGround();
-    drawBlocks();
-    drawPiranhas();
-    drawPipes();
-    enemies.forEach(drawGoomba);
-    drawMario();
-
-    ctx.restore();
-
-    drawUI(); // Giao diện cố định không bị trôi theo camera
-}
-
-function gameLoop() {
-    update();
-    draw();
-    requestAnimationFrame(gameLoop);
-}
-
-// Bàn phím & Cảm ứng
-window.addEventListener("keydown", e => {
-    if (e.key === "ArrowLeft" || e.key === "a") keys.left = true;
-    if (e.key === "ArrowRight" || e.key === "d") keys.right = true;
-    if ((e.key === "ArrowUp" || e.key === " " || e.key === "w") && mario.isGrounded) {
-        mario.dy = mario.jumpPower; mario.isGrounded = false;
-    }
-});
-
-window.addEventListener("keyup", e => {
-    if (e.key === "ArrowLeft" || e.key === "a") keys.left = false;
-    if (e.key === "ArrowRight" || e.key === "d") keys.right = false;
-});
-
-function setupTouchButton(id, onPress, onRelease) {
-    const btn = document.getElementById(id);
-    if (!btn) return;
-    btn.addEventListener("touchstart", e => { e.preventDefault(); onPress(); });
-    btn.addEventListener("touchend", e => { e.preventDefault(); if (onRelease) onRelease(); });
-    btn.addEventListener("mousedown", onPress);
-    btn.addEventListener("mouseup", onRelease);
-}
-
-setupTouchButton("leftBtn", () => keys.left = true, () => keys.left = false);
-setupTouchButton("rightBtn", () => keys.right = true, () => keys.right = false);
-setupTouchButton("jumpBtn", () => {
-    if (mario.isGrounded) { mario.dy = mario.jumpPower; mario.isGrounded = false; }
-});
-
-gameLoop();
+            
