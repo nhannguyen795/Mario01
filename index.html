@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Mini Mario Adventure</title>
+    <title>Mini Mario Classic World</title>
     <style>
         * { box-sizing: border-box; touch-action: manipulation; user-select: none; }
         body { margin: 0; padding: 10px; background: #5c94fc; text-align: center; font-family: Arial, sans-serif; color: #fff; }
         h2 { margin: 5px 0 10px 0; text-shadow: 2px 2px 0 #000; }
-        canvas { background: #5c94fc; display: block; margin: 0 auto; border-bottom: 15px solid #e75910; box-shadow: 0 4px 10px rgba(0,0,0,0.3); max-width: 100%; }
+        canvas { background: #5c94fc; display: block; margin: 0 auto; border-bottom: 15px solid #c84c0c; box-shadow: 0 4px 10px rgba(0,0,0,0.3); max-width: 100%; }
         
         #menu { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(92, 148, 252, 0.98); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; }
         #menu h1 { text-shadow: 3px 3px 0 #000; margin-bottom: 15px; }
@@ -29,14 +29,14 @@
 </head>
 <body>
     <div id="menu">
-        <h1>MINI MARIO</h1>
+        <h1>SUPER MARIO</h1>
         <p>CHỌN ĐỘ KHÓ:</p>
         <button class="menu-btn btn-easy" onclick="initGame('easy')">EASY (Dễ)</button>
-        <button id="btnNormal" class="menu-btn btn-normal" onclick="initGame('normal')" disabled>NORMAL (Khóa 🔒)</button>
+        <button id="btnNormal" class="menu-btn btn-normal" onclick="initGame('normal')" disabled>MEDIUM (Khóa 🔒)</button>
         <button id="btnHard" class="menu-btn btn-hard" onclick="initGame('hard')" disabled>HARD (Khóa 🔒)</button>
     </div>
 
-    <h2>MINI MARIO</h2>
+    <h2>MINI MARIO 1-1</h2>
     <canvas id="game" width="360" height="200"></canvas>
     <div class="controls">
         <div class="d-pad">
@@ -63,13 +63,14 @@
         let coins = 0;
         let cameraX = 0;
         let keys = { left: false, right: false };
-        let worldWidth = 600; // Mặc định Easy ngắn
+        let worldWidth = 800;
 
         let blocks = [];
         let pipes = [];
         let piranhas = [];
         let enemies = [];
-        let flagX = 550; // Vị trí lá cờ chiến thắng
+        let stairs = [];
+        let flagX = 750;
 
         let coinEffect = { x: 0, y: 0, dy: 0, active: false };
 
@@ -78,20 +79,20 @@
             gameStarted = true;
             document.getElementById("menu").style.display = "none";
 
-            // Cấu hình chiều dài màn chơi theo độ khó yêu cầu
+            // Cấu hình chiều dài và độ khó tương ứng
             if (mode === "easy") {
-                worldWidth = 600; // Ngắn
-                mario.speed = 3;
+                worldWidth = 900; // Ngắn
+                mario.speed = 2.8;
             } else if (mode === "normal") {
-                worldWidth = 1000; // Dài hơn một chút
+                worldWidth = 1500; // Dài hơn một chút
                 mario.speed = 2.5;
             } else if (mode === "hard") {
-                worldWidth = 2000; // Dài gấp 2 Medium
+                worldWidth = 3000; // Dài gấp đôi Medium (khó và thách thức hơn)
                 mario.speed = 2.2;
                 mario.gravity = 0.5;
             }
 
-            flagX = worldWidth - 100;
+            flagX = worldWidth - 150;
             setupWorldObjects();
             mario.x = 40;
             mario.y = 130;
@@ -102,58 +103,74 @@
             pipes = [];
             piranhas = [];
             enemies = [];
+            stairs = [];
 
             if (difficulty === "easy") {
                 blocks = [
-                    { x: 120, y: 100, w: 20, h: 20, type: "question", hit: false },
-                    { x: 300, y: 90, w: 20, h: 20, type: "brick" }
+                    { x: 150, y: 100, w: 20, h: 20, type: "question", hit: false },
+                    { x: 170, y: 100, w: 20, h: 20, type: "brick" },
+                    { x: 190, y: 100, w: 20, h: 20, type: "question", hit: false }
                 ];
                 pipes = [{ x: 400, y: 120, w: 32, h: 40 }];
                 piranhas = [{ x: 408, y: 120, w: 16, h: 20, visible: false, timer: 0 }];
-                enemies = [{ x: 250, y: 144, w: 16, h: 16, dir: -1, alive: true }];
+                enemies = [{ x: 280, y: 144, w: 16, h: 16, dir: -1, alive: true }];
+                stairs = [{ x: 650, base: 160, steps: 4 }];
             } else if (difficulty === "normal") {
                 blocks = [
                     { x: 150, y: 100, w: 20, h: 20, type: "question", hit: false },
                     { x: 400, y: 90, w: 20, h: 20, type: "brick" },
-                    { x: 700, y: 100, w: 20, h: 20, type: "question", hit: false }
+                    { x: 750, y: 100, w: 20, h: 20, type: "question", hit: false },
+                    { x: 1100, y: 90, w: 20, h: 20, type: "brick" }
                 ];
                 pipes = [
                     { x: 300, y: 120, w: 32, h: 40 },
-                    { x: 800, y: 120, w: 32, h: 40 }
+                    { x: 850, y: 120, w: 32, h: 40 }
                 ];
                 piranhas = [
                     { x: 308, y: 120, w: 16, h: 20, visible: false, timer: 0 },
-                    { x: 808, y: 120, w: 16, h: 20, visible: false, timer: 100 }
+                    { x: 858, y: 120, w: 16, h: 20, visible: false, timer: 120 }
                 ];
                 enemies = [
-                    { x: 200, y: 144, w: 16, h: 16, dir: -1, alive: true },
-                    { x: 600, y: 144, w: 16, h: 16, dir: 1, alive: true }
+                    { x: 220, y: 144, w: 16, h: 16, dir: -1, alive: true },
+                    { x: 650, y: 144, w: 16, h: 16, dir: 1, alive: true },
+                    { x: 1200, y: 144, w: 16, h: 16, dir: -1, alive: true }
                 ];
+                stairs = [{ x: 1300, base: 160, steps: 5 }];
             } else if (difficulty === "hard") {
+                // Hard dài gấp đôi, nhiều chướng ngại vật, ống cống và cây ăn thịt dày đặc hơn
                 blocks = [
                     { x: 200, y: 90, w: 20, h: 20, type: "question", hit: false },
-                    { x: 600, y: 90, w: 20, h: 20, type: "brick" },
-                    { x: 1100, y: 90, w: 20, h: 20, type: "question", hit: false },
-                    { x: 1600, y: 90, w: 20, h: 20, type: "question", hit: false }
+                    { x: 500, y: 90, w: 20, h: 20, type: "brick" },
+                    { x: 900, y: 90, w: 20, h: 20, type: "question", hit: false },
+                    { x: 1400, y: 90, w: 20, h: 20, type: "brick" },
+                    { x: 1900, y: 90, w: 20, h: 20, type: "question", hit: false },
+                    { x: 2400, y: 90, w: 20, h: 20, type: "brick" }
                 ];
                 pipes = [
-                    { x: 400, y: 120, w: 32, h: 40 },
-                    { x: 900, y: 120, w: 32, h: 40 },
-                    { x: 1400, y: 120, w: 32, h: 40 },
-                    { x: 1800, y: 120, w: 32, h: 40 }
+                    { x: 350, y: 120, w: 32, h: 40 },
+                    { x: 750, y: 120, w: 32, h: 40 },
+                    { x: 1200, y: 120, w: 32, h: 40 },
+                    { x: 1700, y: 120, w: 32, h: 40 },
+                    { x: 2200, y: 120, w: 32, h: 40 },
+                    { x: 2600, y: 120, w: 32, h: 40 }
                 ];
                 piranhas = [
-                    { x: 408, y: 120, w: 16, h: 20, visible: false, timer: 0 },
-                    { x: 908, y: 120, w: 16, h: 20, visible: false, timer: 50 },
-                    { x: 1408, y: 120, w: 16, h: 20, visible: false, timer: 100 },
-                    { x: 1808, y: 120, w: 16, h: 20, visible: false, timer: 150 }
+                    { x: 358, y: 120, w: 16, h: 20, visible: false, timer: 0 },
+                    { x: 758, y: 120, w: 16, h: 20, visible: false, timer: 60 },
+                    { x: 1208, y: 120, w: 16, h: 20, visible: false, timer: 30 },
+                    { x: 1708, y: 120, w: 16, h: 20, visible: false, timer: 90 },
+                    { x: 2208, y: 120, w: 16, h: 20, visible: false, timer: 40 },
+                    { x: 2608, y: 120, w: 16, h: 20, visible: false, timer: 100 }
                 ];
                 enemies = [
-                    { x: 300, y: 144, w: 16, h: 16, dir: -1, alive: true },
-                    { x: 750, y: 144, w: 16, h: 16, dir: 1, alive: true },
-                    { x: 1200, y: 144, w: 16, h: 16, dir: -1, alive: true },
-                    { x: 1650, y: 144, w: 16, h: 16, dir: 1, alive: true }
+                    { x: 280, y: 144, w: 16, h: 16, dir: -1, alive: true },
+                    { x: 650, y: 144, w: 16, h: 16, dir: 1, alive: true },
+                    { x: 1050, y: 144, w: 16, h: 16, dir: -1, alive: true },
+                    { x: 1550, y: 144, w: 16, h: 16, dir: 1, alive: true },
+                    { x: 2050, y: 144, w: 16, h: 16, dir: -1, alive: true },
+                    { x: 2500, y: 144, w: 16, h: 16, dir: 1, alive: true }
                 ];
+                stairs = [{ x: 2750, base: 160, steps: 6 }];
             }
         }
 
@@ -172,24 +189,61 @@
                 }
             }
 
-            // Vẽ cột cờ đích đến
+            // Vẽ bụi cỏ trang trí phong cách cổ điển
+            ctx.fillStyle = "#00a800";
+            [100, 500, 1050, 1650, 2150].forEach(gx => {
+                if (gx < worldWidth) {
+                    ctx.fillRect(gx, groundY - 12, 32, 12);
+                    ctx.fillStyle = "#00d800";
+                    ctx.fillRect(gx + 6, groundY - 16, 20, 4);
+                    ctx.fillStyle = "#00a800";
+                }
+            });
+
+            // Vẽ cột cờ / Lâu đài đích đến cuối màn
             ctx.fillStyle = "#fff";
-            ctx.fillRect(flagX, 80, 4, 80);
-            ctx.fillStyle = "#ff0000";
+            ctx.fillRect(flagX, 70, 4, 90);
+            ctx.fillStyle = "#00d800";
             ctx.beginPath();
-            ctx.moveTo(flagX + 4, 80);
-            ctx.lineTo(flagX + 24, 90);
-            ctx.lineTo(flagX + 4, 100);
+            ctx.arc(flagX + 2, 70, 5, 0, Math.PI * 2);
             ctx.fill();
+
+            // Khối bệ cờ
+            ctx.fillStyle = "#c84c0c";
+            ctx.fillRect(flagX - 10, 140, 24, 20);
+            ctx.strokeRect(flagX - 10, 140, 24, 20);
+
+            // Lâu đài gạch phía sau cột cờ
+            ctx.fillStyle = "#c84c0c";
+            ctx.fillRect(flagX + 40, 100, 60, 60);
+            ctx.strokeRect(flagX + 40, 100, 60, 60);
+            ctx.fillStyle = "#000";
+            ctx.fillRect(flagX + 60, 130, 20, 30); // Cửa lâu đài
+        }
+
+        // Vẽ bậc thang kiểu Mario
+        function drawStairs() {
+            stairs.forEach(s => {
+                for (let i = 0; i < s.steps; i++) {
+                    for (let j = 0; j <= i; j++) {
+                        let bx = s.x + (i * 16);
+                        let by = s.base - ((j + 1) * 12);
+                        ctx.fillStyle = "#c84c0c";
+                        ctx.fillRect(bx, by, 16, 12);
+                        ctx.strokeStyle = "#000";
+                        ctx.strokeRect(bx, by, 16, 12);
+                    }
+                }
+            });
         }
 
         function drawMario() {
-            ctx.fillStyle = "#e40058";
+            ctx.fillStyle = "#e40058"; // Áo & Mũ đỏ
             ctx.fillRect(mario.x + 2, mario.y, 14, 6);
             ctx.fillRect(mario.x + 2, mario.y + 12, 14, 8);
-            ctx.fillStyle = "#fc9838";
+            ctx.fillStyle = "#fc9838"; // Mặt
             ctx.fillRect(mario.x + 4, mario.y + 6, 10, 6);
-            ctx.fillStyle = "#0000d8";
+            ctx.fillStyle = "#0000d8"; // Quần yếm xanh
             ctx.fillRect(mario.x + 4, mario.y + 18, 10, 8);
         }
 
@@ -266,13 +320,13 @@
             if (keys.left && mario.x > 0) mario.x -= mario.speed;
             if (keys.right && mario.x < worldWidth - mario.w) mario.x += mario.speed;
 
-            // Kiểm tra chiến thắng khi chạm cột cờ
+            // Kiểm tra chiến thắng khi chạm cờ
             if (mario.x >= flagX) {
                 alert("CHIẾN THẮNG MÀN " + difficulty.toUpperCase() + "!");
                 if (difficulty === "easy") {
                     unlockedMedium = true;
                     document.getElementById("btnNormal").disabled = false;
-                    document.getElementById("btnNormal").innerText = "NORMAL (Mở khóa)";
+                    document.getElementById("btnNormal").innerText = "MEDIUM (Mở khóa)";
                 } else if (difficulty === "normal") {
                     unlockedHard = true;
                     document.getElementById("btnHard").disabled = false;
@@ -316,7 +370,7 @@
 
             piranhas.forEach(p => {
                 p.timer++;
-                if (p.timer % 600 < 180) {
+                if (p.timer % 500 < 150) {
                     p.visible = true;
                     p.y = 102;
                 } else {
@@ -333,8 +387,9 @@
 
             enemies.forEach(e => {
                 if (!e.alive) return;
-                e.x += e.dir * 0.6;
-                if (e.x <= 100 || e.x >= worldWidth - 50) e.dir *= -1;
+                let enSpeed = (difficulty === "hard") ? 0.8 : 0.6;
+                e.x += e.dir * enSpeed;
+                if (e.x <= 100 || e.x >= worldWidth - 100) e.dir *= -1;
 
                 if (mario.x < e.x + e.w && mario.x + mario.w > e.x &&
                     mario.y + mario.h >= e.y && mario.y + mario.h <= e.y + 8 && mario.dy > 0) {
@@ -354,6 +409,7 @@
 
             drawGround();
             drawBlocks();
+            drawStairs();
             drawPiranhas();
             drawPipes();
             enemies.forEach(drawGoomba);
