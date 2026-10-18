@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Super Mario Bros. Deluxe</title>
+    <title>Super Mario Bros. Classic 1985</title>
     <style>
         * { box-sizing: border-box; touch-action: manipulation; user-select: none; }
         body { margin: 0; padding: 10px; background: #000; text-align: center; font-family: 'Courier New', Courier, monospace; color: #fff; }
         
-        .game-container { position: relative; width: 360px; margin: 0 auto; background: #5c94fc; border: 4px solid #fff; box-shadow: 0 0 15px rgba(255,255,255,0.3); }
+        .game-container { position: relative; width: 360px; margin: 0 auto; background: #5c94fc; border: 4px solid #fff; box-shadow: 0 0 15px rgba(255,255,255,0.4); }
         canvas { background: #5c94fc; display: block; margin: 0 auto; }
         
         #menu { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #5c94fc; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; }
@@ -54,7 +54,7 @@
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let bgmInterval = null;
 
-        // Âm thanh nhạc nền (Star Theme)
+        // Nhạc nền Star Theme
         function startBGM() {
             if (audioCtx.state === 'suspended') { audioCtx.resume(); }
             if (bgmInterval) clearInterval(bgmInterval);
@@ -135,7 +135,7 @@
             });
         }
 
-        // Âm thanh Game Over khi chết
+        // Âm thanh Game Over
         function playGameOverSound() {
             stopBGM();
             if (audioCtx.state === 'suspended') { audioCtx.resume(); }
@@ -163,7 +163,7 @@
         let unlockedHard = false;
 
         let mario = {
-            x: 40, y: 130, w: 16, h: 24, dy: 0, speed: 2.5,
+            x: 40, y: 130, w: 16, h: 24, dx: 0, dy: 0, speed: 2.5,
             gravity: 0.45, jumpPower: -8.5, isGrounded: false, big: false, invincible: false
         };
 
@@ -192,13 +192,13 @@
             worldTime = 400;
 
             if (mode === "easy") {
-                worldWidth = 900;
+                worldWidth = 1000;
                 mario.speed = 2.8;
             } else if (mode === "normal") {
-                worldWidth = 1500;
+                worldWidth = 1600;
                 mario.speed = 2.5;
             } else if (mode === "hard") {
-                worldWidth = 2500;
+                worldWidth = 2600;
                 mario.speed = 2.2;
                 mario.gravity = 0.5;
             }
@@ -215,38 +215,54 @@
 
         function setupWorldObjects() {
             blocks = [
-                { x: 150, y: 100, w: 16, h: 16, type: "question", hit: false, hasMushroom: Math.random() < 0.10 },
+                { x: 150, y: 100, w: 16, h: 16, type: "question", hit: false, hasMushroom: Math.random() < 0.15 },
                 { x: 166, y: 100, w: 16, h: 16, type: "brick" },
-                { x: 182, y: 100, w: 16, h: 16, type: "question", hit: false, hasMushroom: Math.random() < 0.10 }
+                { x: 182, y: 100, w: 16, h: 16, type: "question", hit: false, hasMushroom: Math.random() < 0.15 }
             ];
-            pipes = [{ x: 400, y: 120, w: 32, h: 40 }];
-            piranhas = [{ x: 408, y: 120, w: 16, h: 20, visible: false, timer: 0 }];
-            enemies = [{ x: 280, y: 144, w: 16, h: 16, dir: -1, alive: true }];
-            stairs = [{ x: 650, base: 160, steps: 4 }];
+            
+            // Bố trí nhiều ống cống xanh lá chuẩn
+            pipes = [
+                { x: 380, y: 120, w: 32, h: 40 },
+                { x: 700, y: 110, w: 32, h: 50 },
+                { x: 1100, y: 100, w: 32, h: 60 }
+            ];
+
+            piranhas = [
+                { x: 388, y: 120, w: 16, h: 20, visible: false, timer: 0 },
+                { x: 708, y: 110, w: 16, h: 20, visible: false, timer: 60 },
+                { x: 1108, y: 100, w: 16, h: 20, visible: false, timer: 120 }
+            ];
+
+            enemies = [
+                { x: 280, y: 144, w: 16, h: 16, dir: -1, alive: true },
+                { x: 550, y: 144, w: 16, h: 16, dir: 1, alive: true },
+                { x: 900, y: 144, w: 16, h: 16, dir: -1, alive: true }
+            ];
+
+            stairs = [{ x: 600, base: 160, steps: 4 }];
             mushrooms = [];
             
-            // Khởi tạo vị trí các đám mây trên bầu trời
             clouds = [
-                { x: 80, y: 40 }, { x: 300, y: 30 }, { x: 600, y: 50 }, 
-                { x: 1000, y: 35 }, { x: 1500, y: 40 }, { x: 2100, y: 30 }
+                { x: 60, y: 35 }, { x: 280, y: 25 }, { x: 550, y: 40 }, 
+                { x: 950, y: 30 }, { x: 1400, y: 35 }, { x: 2000, y: 25 }
             ];
 
             if (difficulty !== "easy") {
-                blocks.push({ x: 750, y: 90, w: 16, h: 16, type: "question", hit: false, hasMushroom: Math.random() < 0.10 });
-                pipes.push({ x: 900, y: 110, w: 32, h: 50 });
-                piranhas.push({ x: 908, y: 110, w: 16, h: 20, visible: false, timer: 50 });
-                enemies.push({ x: 800, y: 144, w: 16, h: 16, dir: 1, alive: true });
+                blocks.push({ x: 850, y: 90, w: 16, h: 16, type: "question", hit: false, hasMushroom: Math.random() < 0.15 });
+                pipes.push({ x: 1400, y: 110, w: 32, h: 50 });
+                piranhas.push({ x: 1408, y: 110, w: 16, h: 20, visible: false, timer: 30 });
+                enemies.push({ x: 1250, y: 144, w: 16, h: 16, dir: 1, alive: true });
             }
         }
 
-        // Vẽ mây trên bầu trời
+        // Vẽ mây chi tiết
         function drawClouds() {
             ctx.fillStyle = "#fff";
             clouds.forEach(c => {
                 let cx = c.x;
                 let cy = c.y;
-                ctx.fillRect(cx + 4, cy, 24, 12);
-                ctx.fillRect(cx, cy + 4, 32, 8);
+                ctx.fillRect(cx + 4, cy, 24, 10);
+                ctx.fillRect(cx, cy + 4, 32, 6);
             });
         }
 
@@ -265,8 +281,9 @@
                 }
             }
 
+            // Bụi cỏ xanh
             ctx.fillStyle = "#00a800";
-            [100, 500, 1150, 1850].forEach(gx => {
+            [120, 480, 1020, 1700].forEach(gx => {
                 if (gx < worldWidth) {
                     ctx.fillRect(gx, groundY - 12, 32, 12);
                     ctx.fillStyle = "#00d800";
@@ -275,6 +292,7 @@
                 }
             });
 
+            // Cờ đích & Lâu đài
             ctx.fillStyle = "#fff";
             ctx.fillRect(flagX, 70, 3, 90);
             ctx.fillStyle = "#00d800";
@@ -289,30 +307,31 @@
             ctx.fillRect(flagX + 50, 130, 18, 30);
         }
 
-        // Vẽ Mario chi tiết theo mẫu chuẩn 8-bit
+        // Vẽ Mario sắc nét chuẩn nghệ thuật pixel
         function drawMario() {
             let mx = mario.x;
             let my = mario.y;
 
             if (mario.big) {
-                ctx.fillStyle = "#e40058";
+                // Mario lớn (Super Mario)
+                ctx.fillStyle = "#e40058"; // Mũ & Áo đỏ
                 ctx.fillRect(mx + 2, my, 12, 10);
-                ctx.fillStyle = "#fc9838";
+                ctx.fillStyle = "#fc9838"; // Mặt
                 ctx.fillRect(mx + 3, my + 5, 10, 8);
-                ctx.fillStyle = "#0000d8";
+                ctx.fillStyle = "#0000d8"; // Quần yếm xanh
                 ctx.fillRect(mx + 2, my + 13, 12, 13);
             } else {
-                ctx.fillStyle = "#e40058";
+                // Mario nhỏ
+                ctx.fillStyle = "#e40058"; 
                 ctx.fillRect(mx + 2, my, 12, 5);
                 ctx.fillRect(mx + 2, my + 10, 12, 7);
-                ctx.fillStyle = "#fc9838";
+                ctx.fillStyle = "#fc9838"; 
                 ctx.fillRect(mx + 3, my + 5, 10, 5);
-                ctx.fillStyle = "#0000d8";
+                ctx.fillStyle = "#0000d8"; 
                 ctx.fillRect(mx + 3, my + 17, 10, 7);
             }
         }
 
-        // Vẽ nấm bự lên
         function drawMushrooms() {
             mushrooms.forEach(m => {
                 ctx.fillStyle = "#e40058";
@@ -324,31 +343,28 @@
             });
         }
 
-        // Vẽ quái Goomba
         function drawGoomba(e) {
             if (!e.alive) return;
-            ctx.fillStyle = "#a81000";
+            ctx.fillStyle = "#a81000"; // Thân nấm quái
             ctx.fillRect(e.x + 2, e.y, 12, 10);
-            ctx.fillStyle = "#fc9838";
+            ctx.fillStyle = "#fc9838"; // Chân đế
             ctx.fillRect(e.x, e.y + 10, 16, 6);
-            ctx.fillStyle = "#fff";
+            ctx.fillStyle = "#fff"; // Mắt
             ctx.fillRect(e.x + 3, e.y + 4, 3, 4);
             ctx.fillRect(e.x + 10, e.y + 4, 3, 4);
         }
 
-        // Vẽ cây ăn thịt (Piranha Plant) màu đỏ trắng chuẩn mẫu
+        // Vẽ cây ăn thịt sắc nét (Piranha Plant)
         function drawPiranhas() {
             piranhas.forEach(p => {
                 if (!p.visible) return;
-                // Thân ống cống phụ / cuống cây
-                ctx.fillStyle = "#00d800";
+                ctx.fillStyle = "#00d800"; // Cuống thân cây
                 ctx.fillRect(p.x + 4, p.y + 8, 8, p.h - 8);
-                // Miệng cây ăn thịt đỏ chấm trắng
-                ctx.fillStyle = "#e40058";
+                ctx.fillStyle = "#e40058"; // Đầu búp đỏ
                 ctx.fillRect(p.x, p.y, 16, 10);
-                ctx.fillStyle = "#fff";
-                ctx.fillRect(p.x + 2, p.y + 4, 3, 3);
-                ctx.fillRect(p.x + 11, p.y + 4, 3, 3);
+                ctx.fillStyle = "#fff"; // Chấm trắng & Răng
+                ctx.fillRect(p.x + 2, p.y + 3, 3, 3);
+                ctx.fillRect(p.x + 11, p.y + 3, 3, 3);
             });
         }
 
@@ -371,12 +387,12 @@
             });
         }
 
-        // Vẽ ống cống màu xanh lá đặc trưng
+        // Vẽ ống cống màu xanh lá nổi bật
         function drawPipes() {
             pipes.forEach(p => {
-                ctx.fillStyle = "#00a800";
+                ctx.fillStyle = "#00a800"; // Thân ống
                 ctx.fillRect(p.x, p.y, p.w, p.h);
-                ctx.fillStyle = "#00d800";
+                ctx.fillStyle = "#00d800"; // Miệng ống nổi
                 ctx.fillRect(p.x - 2, p.y, p.w + 4, 8);
                 ctx.strokeStyle = "#000";
                 ctx.strokeRect(p.x, p.y, p.w, p.h);
@@ -407,7 +423,7 @@
 
             ctx.fillText(String(score).padStart(6, '0'), 25, 30);
             
-            // Vẽ biểu tượng đồng xu chi tiết chuẩn mẫu hình ảnh
+            // Biểu tượng đồng xu chuẩn pixel
             ctx.fillStyle = "#f8d800";
             ctx.fillRect(85, 22, 6, 8);
             ctx.fillStyle = "#e75910";
@@ -417,11 +433,9 @@
 
             ctx.fillStyle = "#fff";
             ctx.fillText("x" + String(coins).padStart(2, '0'), 98, 30);
-
             ctx.fillText("1-1", 170, 30);
             ctx.fillText(String(Math.max(0, Math.floor(worldTime))), 285, 30);
 
-            // Hiệu ứng đồng xu nảy lên khi ăn
             if (coinEffect.active) {
                 ctx.fillStyle = "#f8d800";
                 ctx.beginPath();
@@ -435,8 +449,23 @@
 
             worldTime -= 0.02;
 
-            if (keys.left && mario.x > 0) mario.x -= mario.speed;
-            if (keys.right && mario.x < worldWidth - mario.w) mario.x += mario.speed;
+            // Di chuyển ngang với quán tính mượt
+            mario.dx = 0;
+            if (keys.left) mario.dx = -mario.speed;
+            if (keys.right) mario.dx = mario.speed;
+
+            mario.x += mario.dx;
+            if (mario.x < 0) mario.x = 0;
+            if (mario.x > worldWidth - mario.w) mario.x = worldWidth - mario.w;
+
+            // Xử lý va chạm ngang với Ống cống (Không đi xuyên qua được nữa)
+            pipes.forEach(p => {
+                if (mario.x < p.x + p.w && mario.x + mario.w > p.x &&
+                    mario.y + mario.h > p.y && mario.y < p.y + p.h) {
+                    if (mario.dx > 0) mario.x = p.x - mario.w;
+                    else if (mario.dx < 0) mario.x = p.x + p.w;
+                }
+            });
 
             if (mario.x >= flagX) {
                 stopBGM();
@@ -459,14 +488,26 @@
             if (cameraX < 0) cameraX = 0;
             if (cameraX > worldWidth - canvas.width) cameraX = worldWidth - canvas.width;
 
+            // Trọng lực rơi
             mario.dy += mario.gravity;
             mario.y += mario.dy;
 
+            // Va chạm sàn nhà
             if (mario.y + mario.h >= 160) {
                 mario.y = 160 - mario.h;
                 mario.dy = 0;
                 mario.isGrounded = true;
             }
+
+            // Va chạm đứng trên ống cống
+            pipes.forEach(p => {
+                if (mario.x + mario.w > p.x && mario.x < p.x + p.w &&
+                    mario.y + mario.h >= p.y && mario.y + mario.h <= p.y + 12 && mario.dy >= 0) {
+                    mario.y = p.y - mario.h;
+                    mario.dy = 0;
+                    mario.isGrounded = true;
+                }
+            });
 
             mushrooms.forEach(m => {
                 m.dy = (m.dy || 0) + 0.4;
@@ -497,7 +538,7 @@
                             coins += 1;
                             score += 200;
                             coinEffect = { x: b.x + 8, y: b.y - 5, dy: -3, active: true };
-                            playCoinSound(); // Phát âm thanh ăn đồng xu
+                            playCoinSound();
                         }
                     }
                 }
@@ -509,11 +550,13 @@
                 if (coinEffect.dy > 2) coinEffect.active = false;
             }
 
+            // Cây ăn thịt
             piranhas.forEach(p => {
                 p.timer++;
-                if (p.timer % 400 < 120) {
+                if (p.timer % 400 < 130) {
                     p.visible = true;
-                    p.y = 100;
+                    p.y = p.y - 0.2; // Trồi lên từ từ
+                    if (p.y < 90) p.y = 90;
                 } else {
                     p.visible = false;
                     p.y = 120;
@@ -524,6 +567,7 @@
                 }
             });
 
+            // Kẻ địch Goomba
             enemies.forEach(e => {
                 if (!e.alive) return;
                 e.x += e.dir * 0.6;
