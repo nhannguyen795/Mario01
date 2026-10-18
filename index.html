@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Mini Mario Deluxe</title>
+    <title>Mini Mario Adventure</title>
     <style>
         * { box-sizing: border-box; touch-action: manipulation; user-select: none; }
         body { margin: 0; padding: 10px; background: #5c94fc; text-align: center; font-family: Arial, sans-serif; color: #fff; }
@@ -16,8 +16,8 @@
         .btn-easy { background: #00d800; color: #000; }
         .btn-normal { background: #f8d800; color: #000; }
         .btn-hard { background: #e75910; color: #fff; }
-        .btn-impossible { background: #a81000; color: #fff; }
-        .menu-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #000; }
+        .menu-btn:disabled { background: #808080; color: #333; cursor: not-allowed; box-shadow: none; transform: none; }
+        .menu-btn:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 0 0 #000; }
 
         .controls { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 360px; margin: 15px auto 0 auto; }
         .d-pad { display: flex; gap: 10px; }
@@ -32,9 +32,8 @@
         <h1>MINI MARIO</h1>
         <p>CHỌN ĐỘ KHÓ:</p>
         <button class="menu-btn btn-easy" onclick="initGame('easy')">EASY (Dễ)</button>
-        <button class="menu-btn btn-normal" onclick="initGame('normal')">NORMAL (Thường)</button>
-        <button class="menu-btn btn-hard" onclick="initGame('hard')">HARD (Khó)</button>
-        <button class="menu-btn btn-impossible" onclick="initGame('impossible')">IMPOSSIBLE (Ác mộng)</button>
+        <button id="btnNormal" class="menu-btn btn-normal" onclick="initGame('normal')" disabled>NORMAL (Khóa 🔒)</button>
+        <button id="btnHard" class="menu-btn btn-hard" onclick="initGame('hard')" disabled>HARD (Khóa 🔒)</button>
     </div>
 
     <h2>MINI MARIO</h2>
@@ -52,7 +51,9 @@
         const ctx = canvas.getContext("2d");
 
         let gameStarted = false;
-        let difficulty = "normal";
+        let difficulty = "easy";
+        let unlockedMedium = false;
+        let unlockedHard = false;
 
         let mario = {
             x: 40, y: 130, w: 18, h: 26, dy: 0, speed: 2.5,
@@ -62,49 +63,99 @@
         let coins = 0;
         let cameraX = 0;
         let keys = { left: false, right: false };
-        let worldWidth = 1200;
+        let worldWidth = 600; // Mặc định Easy ngắn
 
-        let blocks = [
-            { x: 100, y: 100, w: 20, h: 20, type: "brick" },
-            { x: 120, y: 100, w: 20, h: 20, type: "question", hit: false },
-            { x: 140, y: 100, w: 20, h: 20, type: "brick" },
-            { x: 350, y: 90, w: 20, h: 20, type: "question", hit: false },
-            { x: 550, y: 100, w: 20, h: 20, type: "question", hit: false },
-            { x: 800, y: 80, w: 20, h: 20, type: "question", hit: false }
-        ];
-
-        let pipes = [
-            { x: 280, y: 120, w: 32, h: 40 },
-            { x: 600, y: 120, w: 32, h: 40 },
-            { x: 950, y: 120, w: 32, h: 40 }
-        ];
-
-        let piranhas = [
-            { x: 288, y: 120, w: 16, h: 20, visible: false, timer: 0 },
-            { x: 608, y: 120, w: 16, h: 20, visible: false, timer: 100 },
-            { x: 958, y: 120, w: 16, h: 20, visible: false, timer: 200 }
-        ];
-
-        let enemies = [
-            { x: 200, y: 144, w: 16, h: 16, dir: -1, alive: true },
-            { x: 450, y: 144, w: 16, h: 16, dir: 1, alive: true },
-            { x: 700, y: 144, w: 16, h: 16, dir: -1, alive: true },
-            { x: 1050, y: 144, w: 16, h: 16, dir: 1, alive: true }
-        ];
+        let blocks = [];
+        let pipes = [];
+        let piranhas = [];
+        let enemies = [];
+        let flagX = 550; // Vị trí lá cờ chiến thắng
 
         let coinEffect = { x: 0, y: 0, dy: 0, active: false };
 
         window.initGame = function(mode) {
             difficulty = mode;
             gameStarted = true;
-            const menuEl = document.getElementById("menu");
-            if (menuEl) menuEl.style.display = "none";
+            document.getElementById("menu").style.display = "none";
 
-            if (mode === "easy") mario.speed = 3;
-            else if (mode === "normal") mario.speed = 2.5;
-            else if (mode === "hard") { mario.speed = 2.2; mario.gravity = 0.5; }
-            else if (mode === "impossible") { mario.speed = 2; mario.gravity = 0.55; mario.jumpPower = -8; }
+            // Cấu hình chiều dài màn chơi theo độ khó yêu cầu
+            if (mode === "easy") {
+                worldWidth = 600; // Ngắn
+                mario.speed = 3;
+            } else if (mode === "normal") {
+                worldWidth = 1000; // Dài hơn một chút
+                mario.speed = 2.5;
+            } else if (mode === "hard") {
+                worldWidth = 2000; // Dài gấp 2 Medium
+                mario.speed = 2.2;
+                mario.gravity = 0.5;
+            }
+
+            flagX = worldWidth - 100;
+            setupWorldObjects();
+            mario.x = 40;
+            mario.y = 130;
         };
+
+        function setupWorldObjects() {
+            blocks = [];
+            pipes = [];
+            piranhas = [];
+            enemies = [];
+
+            if (difficulty === "easy") {
+                blocks = [
+                    { x: 120, y: 100, w: 20, h: 20, type: "question", hit: false },
+                    { x: 300, y: 90, w: 20, h: 20, type: "brick" }
+                ];
+                pipes = [{ x: 400, y: 120, w: 32, h: 40 }];
+                piranhas = [{ x: 408, y: 120, w: 16, h: 20, visible: false, timer: 0 }];
+                enemies = [{ x: 250, y: 144, w: 16, h: 16, dir: -1, alive: true }];
+            } else if (difficulty === "normal") {
+                blocks = [
+                    { x: 150, y: 100, w: 20, h: 20, type: "question", hit: false },
+                    { x: 400, y: 90, w: 20, h: 20, type: "brick" },
+                    { x: 700, y: 100, w: 20, h: 20, type: "question", hit: false }
+                ];
+                pipes = [
+                    { x: 300, y: 120, w: 32, h: 40 },
+                    { x: 800, y: 120, w: 32, h: 40 }
+                ];
+                piranhas = [
+                    { x: 308, y: 120, w: 16, h: 20, visible: false, timer: 0 },
+                    { x: 808, y: 120, w: 16, h: 20, visible: false, timer: 100 }
+                ];
+                enemies = [
+                    { x: 200, y: 144, w: 16, h: 16, dir: -1, alive: true },
+                    { x: 600, y: 144, w: 16, h: 16, dir: 1, alive: true }
+                ];
+            } else if (difficulty === "hard") {
+                blocks = [
+                    { x: 200, y: 90, w: 20, h: 20, type: "question", hit: false },
+                    { x: 600, y: 90, w: 20, h: 20, type: "brick" },
+                    { x: 1100, y: 90, w: 20, h: 20, type: "question", hit: false },
+                    { x: 1600, y: 90, w: 20, h: 20, type: "question", hit: false }
+                ];
+                pipes = [
+                    { x: 400, y: 120, w: 32, h: 40 },
+                    { x: 900, y: 120, w: 32, h: 40 },
+                    { x: 1400, y: 120, w: 32, h: 40 },
+                    { x: 1800, y: 120, w: 32, h: 40 }
+                ];
+                piranhas = [
+                    { x: 408, y: 120, w: 16, h: 20, visible: false, timer: 0 },
+                    { x: 908, y: 120, w: 16, h: 20, visible: false, timer: 50 },
+                    { x: 1408, y: 120, w: 16, h: 20, visible: false, timer: 100 },
+                    { x: 1808, y: 120, w: 16, h: 20, visible: false, timer: 150 }
+                ];
+                enemies = [
+                    { x: 300, y: 144, w: 16, h: 16, dir: -1, alive: true },
+                    { x: 750, y: 144, w: 16, h: 16, dir: 1, alive: true },
+                    { x: 1200, y: 144, w: 16, h: 16, dir: -1, alive: true },
+                    { x: 1650, y: 144, w: 16, h: 16, dir: 1, alive: true }
+                ];
+            }
+        }
 
         function drawGround() {
             const groundY = 160;
@@ -120,23 +171,31 @@
                     ctx.fillRect(x + 2, y + 2, 12, 2);
                 }
             }
+
+            // Vẽ cột cờ đích đến
+            ctx.fillStyle = "#fff";
+            ctx.fillRect(flagX, 80, 4, 80);
+            ctx.fillStyle = "#ff0000";
+            ctx.beginPath();
+            ctx.moveTo(flagX + 4, 80);
+            ctx.lineTo(flagX + 24, 90);
+            ctx.lineTo(flagX + 4, 100);
+            ctx.fill();
         }
 
         function drawMario() {
             ctx.fillStyle = "#e40058";
             ctx.fillRect(mario.x + 2, mario.y, 14, 6);
             ctx.fillRect(mario.x + 2, mario.y + 12, 14, 8);
-
             ctx.fillStyle = "#fc9838";
             ctx.fillRect(mario.x + 4, mario.y + 6, 10, 6);
-
             ctx.fillStyle = "#0000d8";
             ctx.fillRect(mario.x + 4, mario.y + 18, 10, 8);
         }
 
         function drawGoomba(e) {
             if (!e.alive) return;
-            ctx.fillStyle = (difficulty === "impossible") ? "#000" : "#a81000";
+            ctx.fillStyle = "#a81000";
             ctx.fillRect(e.x + 2, e.y, 12, 10);
             ctx.fillStyle = "#fc9838";
             ctx.fillRect(e.x, e.y + 10, 16, 6);
@@ -207,6 +266,23 @@
             if (keys.left && mario.x > 0) mario.x -= mario.speed;
             if (keys.right && mario.x < worldWidth - mario.w) mario.x += mario.speed;
 
+            // Kiểm tra chiến thắng khi chạm cột cờ
+            if (mario.x >= flagX) {
+                alert("CHIẾN THẮNG MÀN " + difficulty.toUpperCase() + "!");
+                if (difficulty === "easy") {
+                    unlockedMedium = true;
+                    document.getElementById("btnNormal").disabled = false;
+                    document.getElementById("btnNormal").innerText = "NORMAL (Mở khóa)";
+                } else if (difficulty === "normal") {
+                    unlockedHard = true;
+                    document.getElementById("btnHard").disabled = false;
+                    document.getElementById("btnHard").innerText = "HARD (Mở khóa)";
+                }
+                gameStarted = false;
+                document.getElementById("menu").style.display = "flex";
+                return;
+            }
+
             cameraX = mario.x - canvas.width / 2;
             if (cameraX < 0) cameraX = 0;
             if (cameraX > worldWidth - canvas.width) cameraX = worldWidth - canvas.width;
@@ -257,9 +333,8 @@
 
             enemies.forEach(e => {
                 if (!e.alive) return;
-                let speed = (difficulty === "easy") ? 0.3 : (difficulty === "hard" || difficulty === "impossible") ? 1 : 0.6;
-                e.x += e.dir * speed;
-                if (e.x <= 150 || e.x >= worldWidth - 100) e.dir *= -1;
+                e.x += e.dir * 0.6;
+                if (e.x <= 100 || e.x >= worldWidth - 50) e.dir *= -1;
 
                 if (mario.x < e.x + e.w && mario.x + mario.w > e.x &&
                     mario.y + mario.h >= e.y && mario.y + mario.h <= e.y + 8 && mario.dy > 0) {
