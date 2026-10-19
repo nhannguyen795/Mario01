@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Super Mario Bros. HD Pixel</title>
+    <title>Super Mario Bros. Deluxe</title>
     <style>
         * { box-sizing: border-box; touch-action: manipulation; user-select: none; }
         body { margin: 0; padding: 10px; background: #000; text-align: center; font-family: 'Courier New', Courier, monospace; color: #fff; }
@@ -80,20 +80,21 @@
             if (bgmInterval) { clearInterval(bgmInterval); bgmInterval = null; }
         }
 
+        // Âm thanh nhảy chuẩn NES
         function playJumpSound() {
             if (audioCtx.state === 'suspended') { audioCtx.resume(); }
             let osc = audioCtx.createOscillator();
             let gain = audioCtx.createGain();
             osc.type = "square";
             let startTime = audioCtx.currentTime;
-            osc.frequency.setValueAtTime(150, startTime);
-            osc.frequency.exponentialRampToValueAtTime(600, startTime + 0.15);
+            osc.frequency.setValueAtTime(220, startTime);
+            osc.frequency.exponentialRampToValueAtTime(660, startTime + 0.12);
             osc.connect(gain);
             gain.connect(audioCtx.destination);
             osc.start(startTime);
-            gain.gain.setValueAtTime(0.1, startTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.15);
-            osc.stop(startTime + 0.15);
+            gain.gain.setValueAtTime(0.08, startTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.12);
+            osc.stop(startTime + 0.12);
         }
 
         function playCoinSound() {
@@ -107,15 +108,16 @@
             osc.connect(gain);
             gain.connect(audioCtx.destination);
             osc.start(startTime);
-            gain.gain.setValueAtTime(0.1, startTime);
+            gain.gain.setValueAtTime(0.08, startTime);
             gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.25);
             osc.stop(startTime + 0.25);
         }
 
+        // Âm thanh ăn nấm chuẩn từ video bạn gửi (Power-Up Sound Effect)
         function playPowerUpSound() {
             if (audioCtx.state === 'suspended') { audioCtx.resume(); }
-            let notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99];
-            let duration = 0.08;
+            let notes = [220, 277.18, 329.63, 440, 554.37, 659.25, 880];
+            let duration = 0.07;
             notes.forEach((freq, index) => {
                 let osc = audioCtx.createOscillator();
                 let gain = audioCtx.createGain();
@@ -125,7 +127,7 @@
                 gain.connect(audioCtx.destination);
                 let startTime = audioCtx.currentTime + (index * duration);
                 osc.start(startTime);
-                gain.gain.setValueAtTime(0.1, startTime);
+                gain.gain.setValueAtTime(0.08, startTime);
                 gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
                 osc.stop(startTime + duration);
             });
@@ -146,7 +148,7 @@
                 gain.connect(audioCtx.destination);
                 let startTime = audioCtx.currentTime + times[index];
                 osc.start(startTime);
-                gain.gain.setValueAtTime(0.1, startTime);
+                gain.gain.setValueAtTime(0.08, startTime);
                 gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
                 osc.stop(startTime + duration);
             });
@@ -176,7 +178,7 @@
         let stairs = [];
         let mushrooms = [];
         let clouds = [];
-        let dustParticles = []; // Mảng chứa hiệu ứng hạt bụi khi di chuyển
+        let dustParticles = [];
         let flagX = 900;
 
         let coinEffect = { x: 0, y: 0, dy: 0, active: false };
@@ -219,35 +221,30 @@
             
             pipes = [
                 { x: 380, y: 120, w: 32, h: 40 },
-                { x: 700, y: 110, w: 32, h: 50 },
-                { x: 1100, y: 100, w: 32, h: 60 }
+                { x: 700, y: 110, w: 32, h: 50 }
             ];
 
             piranhas = [
                 { x: 388, y: 120, w: 16, h: 20, visible: false, timer: 0 },
-                { x: 708, y: 110, w: 16, h: 20, visible: false, timer: 60 },
-                { x: 1108, y: 100, w: 16, h: 20, visible: false, timer: 120 }
+                { x: 708, y: 110, w: 16, h: 20, visible: false, timer: 60 }
             ];
 
             enemies = [
                 { x: 280, y: 144, w: 16, h: 16, dir: -1, alive: true },
-                { x: 550, y: 144, w: 16, h: 16, dir: 1, alive: true },
-                { x: 900, y: 144, w: 16, h: 16, dir: -1, alive: true }
+                { x: 550, y: 144, w: 16, h: 16, dir: 1, alive: true }
             ];
 
-            stairs = [{ x: 600, base: 160, steps: 4 }];
+            // Bậc thang ở khúc cuối (Stairs) được thiết lập kỹ để Mario đứng lên được
+            stairs = [{ x: flagX - 120, base: 160, steps: 5 }];
             mushrooms = [];
             
             clouds = [
                 { x: 60, y: 35 }, { x: 280, y: 25 }, { x: 550, y: 40 }, 
-                { x: 950, y: 30 }, { x: 1400, y: 35 }, { x: 2000, y: 25 }
+                { x: 950, y: 30 }, { x: 1400, y: 35 }
             ];
 
             if (difficulty !== "easy") {
                 blocks.push({ x: 850, y: 90, w: 16, h: 16, type: "question", hit: false, hasMushroom: Math.random() < 0.15 });
-                pipes.push({ x: 1400, y: 110, w: 32, h: 50 });
-                piranhas.push({ x: 1408, y: 110, w: 16, h: 20, visible: false, timer: 30 });
-                enemies.push({ x: 1250, y: 144, w: 16, h: 16, dir: 1, alive: true });
             }
         }
 
@@ -307,7 +304,6 @@
             ctx.fillRect(flagX + 50, 130, 18, 30);
         }
 
-        // Vẽ hiệu ứng hạt bụi khi di chuyển
         function drawDustParticles() {
             ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
             dustParticles.forEach(p => {
@@ -316,7 +312,6 @@
         }
 
         function drawMario() {
-            // Hiệu ứng chớp nháy khi Mario vừa bị thương hoặc đổi trạng thái
             if (mario.invincible && Math.floor(Date.now() / 80) % 2 === 0) return;
 
             let mx = mario.x;
@@ -443,6 +438,7 @@
             });
         }
 
+        // Vẽ bậc thang chi tiết và chuẩn xác
         function drawStairs() {
             stairs.forEach(s => {
                 for (let i = 0; i < s.steps; i++) {
@@ -453,6 +449,8 @@
                         ctx.fillRect(bx, by, 16, 12);
                         ctx.strokeStyle = "#000";
                         ctx.strokeRect(bx, by, 16, 12);
+                        ctx.fillStyle = "#fc9838";
+                        ctx.fillRect(bx + 2, by + 2, 12, 2);
                     }
                 }
             });
@@ -502,7 +500,6 @@
             if (mario.x < 0) mario.x = 0;
             if (mario.x > worldWidth - mario.w) mario.x = worldWidth - mario.w;
 
-            // Tạo hiệu ứng hạt bụi khi Mario đang chạy trên mặt đất
             if (mario.isGrounded && mario.dx !== 0 && Math.random() < 0.4) {
                 dustParticles.push({
                     x: mario.x + (mario.dx > 0 ? 0 : mario.w),
@@ -512,7 +509,6 @@
                 });
             }
 
-            // Cập nhật vị trí hạt bụi
             dustParticles.forEach(p => {
                 p.life--;
                 p.y -= 0.2;
@@ -550,19 +546,38 @@
 
             mario.dy += mario.gravity;
             mario.y += mario.dy;
+            mario.isGrounded = false;
 
+            // Va chạm mặt đất
             if (mario.y + mario.h >= 160) {
                 mario.y = 160 - mario.h;
                 mario.dy = 0;
                 mario.isGrounded = true;
             }
 
+            // Va chạm ống cống (đứng trên)
             pipes.forEach(p => {
                 if (mario.x + mario.w > p.x && mario.x < p.x + p.w &&
                     mario.y + mario.h >= p.y && mario.y + mario.h <= p.y + 12 && mario.dy >= 0) {
                     mario.y = p.y - mario.h;
                     mario.dy = 0;
                     mario.isGrounded = true;
+                }
+            });
+
+            // Va chạm chuẩn xác với các bậc thang ở cuối để Mario đứng vững
+            stairs.forEach(s => {
+                for (let i = 0; i < s.steps; i++) {
+                    for (let j = 0; j <= i; j++) {
+                        let bx = s.x + (i * 16);
+                        let by = s.base - ((j + 1) * 12);
+                        if (mario.x + mario.w > bx && mario.x < bx + 16 &&
+                            mario.y + mario.h >= by && mario.y + mario.h <= by + 10 && mario.dy >= 0) {
+                            mario.y = by - mario.h;
+                            mario.dy = 0;
+                            mario.isGrounded = true;
+                        }
+                    }
                 }
             });
 
@@ -659,7 +674,7 @@
 
             drawClouds();
             drawGround();
-            drawDustParticles(); // Vẽ hiệu ứng hạt bụi phía trên mặt đất
+            drawDustParticles();
             drawBlocks();
             drawStairs();
             drawPiranhas();
