@@ -2,80 +2,115 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Mario Bros Deluxe - PC Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Super Mario Bros Classic HD</title>
     <style>
-        * { box-sizing: border-box; user-select: none; }
-        body { margin: 0; padding: 20px; background: #0a0a0a; text-align: center; font-family: 'Courier New', Courier, monospace; color: #fff; }
+        * { box-sizing: border-box; touch-action: manipulation; user-select: none; }
+        body { margin: 0; padding: 10px; background: #050505; text-align: center; font-family: 'Courier New', Courier, monospace; color: #fff; }
         
-        .main-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-
-        .game-box { 
-            position: relative; 
-            width: 800px; 
-            height: 450px; 
-            background: #5c94fc; 
-            border: 6px solid #fff; 
+        .game-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            background: #5c94fc;
+            border: 4px solid #fff;
             border-radius: 8px;
-            box-shadow: 0 0 25px rgba(255,255,255,0.3); 
-            overflow: hidden; 
+            box-shadow: 0 0 20px rgba(255,255,255,0.3);
+            overflow: hidden;
         }
 
-        canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; image-rendering: crisp-edges; }
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 16 / 9;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
         
-        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #5c94fc; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; }
-        .overlay h1 { margin: 0 0 10px 0; color: #fff; text-shadow: 4px 4px #d80000; font-size: 36px; letter-spacing: 2px; }
-        .overlay h3 { margin: 5px 0 20px 0; font-size: 16px; color: #f8d800; text-shadow: 2px 2px #000; }
+        .overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #5c94fc;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        .overlay h1 { margin: 0 0 10px 0; color: #fff; text-shadow: 3px 3px #d80000; font-size: clamp(20px, 5vw, 32px); }
+        .overlay h3 { margin: 5px 0 15px 0; font-size: clamp(12px, 3vw, 16px); color: #f8d800; text-shadow: 1px 1px #000; }
         
-        input[type="text"] { width: 320px; padding: 12px; font-size: 16px; font-family: inherit; font-weight: bold; text-align: center; border: 3px solid #000; border-radius: 6px; margin-bottom: 15px; }
+        input[type="text"] { width: 80%; max-width: 300px; padding: 10px; font-size: 14px; font-family: inherit; font-weight: bold; text-align: center; border: 2px solid #000; border-radius: 4px; margin-bottom: 10px; }
         
-        .btn-ui { width: 320px; padding: 12px; margin: 6px 0; font-size: 16px; font-family: inherit; font-weight: bold; background: #000; color: #fff; border: 3px solid #fff; border-radius: 6px; cursor: pointer; box-shadow: 0 4px 0 #222; transition: all 0.1s; }
+        .btn-ui { width: 80%; max-width: 300px; padding: 10px; margin: 4px 0; font-size: 14px; font-family: inherit; font-weight: bold; background: #000; color: #fff; border: 2px solid #fff; border-radius: 4px; cursor: pointer; box-shadow: 0 4px 0 #222; }
         .btn-ui:disabled { background: #555; color: #aaa; border-color: #888; cursor: not-allowed; box-shadow: none; }
-        .btn-ui:hover:not(:disabled) { background: #e40058; transform: translateY(-2px); }
-        .btn-ui:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 #222; }
+        .btn-ui:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 #222; background: #e40058; }
 
-        .key-guide { margin-top: 15px; color: #aaa; font-size: 14px; background: #1a1a1a; padding: 10px 20px; border-radius: 6px; border: 1px solid #333; }
-        .key-guide span { color: #f8d800; font-weight: bold; }
+        /* Điều khiển cảm ứng điện thoại */
+        .touch-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 800px;
+            margin: 10px auto 0 auto;
+            padding: 0 5px;
+        }
+        .d-pad { display: flex; gap: 10px; }
+        .btn-ctrl { width: 65px; height: 50px; background: #f8d800; color: #000; border: 3px solid #000; font-weight: bold; font-size: 20px; border-radius: 10px; box-shadow: 0 4px 0 #000; cursor: pointer; }
+        .btn-ctrl:active { transform: translateY(3px); box-shadow: none; background: #d4b800; }
+        .btn-jump { width: 85px; background: #e75910; color: #fff; }
+
+        .pc-guide { margin-top: 10px; font-size: 12px; color: #aaa; }
+        .pc-guide span { color: #f8d800; }
     </style>
 </head>
 <body>
 
-    <div class="main-wrapper">
-        <div class="game-box" id="gameContainer">
-            <!-- 1. MÀN HÌNH ĐĂNG NHẬP -->
-            <div id="loginScreen" class="overlay">
-                <h1>SUPER MARIO BROS</h1>
-                <h3>TẠO TÀI KHOẢN MỚI (PC EDITION)</h3>
-                <input type="text" id="userInput" placeholder="Nhập tên tài khoản...">
-                <button class="btn-ui" style="background:#00a800;" onclick="handleLogin()">ĐĂNG NHẬP / CHƠI NGAY ➔</button>
-            </div>
-
-            <!-- 2. MÀN HÌNH CHỌN MÀN CHƠI -->
-            <div id="menuScreen" class="overlay" style="display: none;">
-                <h1>CHỌN ĐỘ KHÓ</h1>
-                <h3 id="userStatus">Tài khoản: Khách | 0 Xu</h3>
-                <button class="btn-ui" onclick="startGame('easy')">1. EASY (Dễ)</button>
-                <button class="btn-ui" id="btnNormal" onclick="startGame('normal')" disabled>2. MEDIUM (Khóa 🔒)</button>
-                <button class="btn-ui" id="btnHard" onclick="startGame('hard')" disabled>3. HARD (Khóa 🔒)</button>
-                <button class="btn-ui" style="background:#d80000; margin-top:10px;" onclick="logout()">⬅ ĐỔI TÀI KHOẢN</button>
-            </div>
-
-            <!-- 3. MÀN HÌNH CHIẾN THẮNG -->
-            <div id="winScreen" class="overlay" style="display: none; background: rgba(0,0,0,0.95);">
-                <h1 style="color:#f8d800;">STAGE CLEAR! 🚩</h1>
-                <h3 id="winCoinsEarned">🪙 +0 Xu kiếm được</h3>
-                <h3 id="winTotalCoins" style="color:#fff;">💰 Tổng xu tài khoản: 0</h3>
-                <button class="btn-ui" style="background:#00a800; margin-top:15px;" onclick="showMenu()">TIẾP TỤC ➔</button>
-            </div>
-
-            <canvas id="canvas" width="800" height="450"></canvas>
+    <div class="game-wrapper" id="gameContainer">
+        <!-- 1. ĐĂNG NHẬP -->
+        <div id="loginScreen" class="overlay">
+            <h1>SUPER MARIO BROS</h1>
+            <h3>TẠO TÀI KHOẢN MỚI</h3>
+            <input type="text" id="userInput" placeholder="Nhập tên tài khoản...">
+            <button class="btn-ui" style="background:#00a800;" onclick="handleLogin()">VÀO CHƠI (0 XU) ➔</button>
         </div>
 
-        <!-- HƯỚNG DẪN PHÍM BẤM PC -->
-        <div class="key-guide">
-            🎮 <b>ĐIỀU KHIỂN BÀN PHÍM:</b> Di chuyển: <span>A / D</span> hoặc <span>Mũi tên Trái / Phải</span> | Nhảy: <span>W</span>, <span>Space (Phím cách)</span> hoặc <span>Mũi tên Lên</span>
+        <!-- 2. CHỌN MÀN CHƠI -->
+        <div id="menuScreen" class="overlay" style="display: none;">
+            <h1>CHỌN ĐỘ KHÓ</h1>
+            <h3 id="userStatus">Tài khoản: Khách | 0 Xu</h3>
+            <button class="btn-ui" onclick="startGame('easy')">1. EASY (Dễ)</button>
+            <button class="btn-ui" id="btnNormal" onclick="startGame('normal')" disabled>2. MEDIUM (Khóa 🔒)</button>
+            <button class="btn-ui" id="btnHard" onclick="startGame('hard')" disabled>3. HARD (Khóa 🔒)</button>
+            <button class="btn-ui" style="background:#d80000; margin-top:5px;" onclick="logout()">⬅ ĐỔI TÀI KHOẢN</button>
         </div>
-        <button class="btn-ui" style="width:200px; margin-top:10px; background:#444;" onclick="toggleFullScreen()">🖥️ TOÀN MÀN HÌNH</button>
+
+        <!-- 3. MÀN HÌNH CHIẾN THẮNG -->
+        <div id="winScreen" class="overlay" style="display: none; background: rgba(0,0,0,0.95);">
+            <h1 style="color:#f8d800;">STAGE CLEAR! 🚩</h1>
+            <h3 id="winCoinsEarned">🪙 +0 Xu kiếm được</h3>
+            <h3 id="winTotalCoins" style="color:#fff;">💰 Tổng xu tài khoản: 0</h3>
+            <button class="btn-ui" style="background:#00a800; margin-top:15px;" onclick="showMenu()">TIẾP TỤC ➔</button>
+        </div>
+
+        <canvas id="canvas" width="640" height="360"></canvas>
+    </div>
+
+    <!-- CỤM NÚT CẢM ỨNG ĐIỆN THOẠI -->
+    <div class="touch-controls">
+        <div class="d-pad">
+            <button class="btn-ctrl" id="btnLeft">◄</button>
+            <button class="btn-ctrl" id="btnRight">►</button>
+        </div>
+        <button class="btn-ctrl btn-jump" id="btnJump">NHẢY</button>
+    </div>
+
+    <div class="pc-guide">
+        💻 Máy tính: Di chuyển <span>A / D</span> hoặc <span>Mũi tên</span> | Nhảy <span>W / Space</span>
     </div>
 
     <script>
@@ -83,15 +118,15 @@
         const ctx = canvas.getContext("2d");
 
         let currentUser = null;
-        let db = JSON.parse(localStorage.getItem("mario_pc_db") || "{}");
+        let db = JSON.parse(localStorage.getItem("mario_responsive_db") || "{}");
 
         function handleLogin() {
             let name = document.getElementById("userInput").value.trim();
-            if (!name) return alert("Vui lòng nhập tên tài khoản!");
+            if (!name) return alert("Vui lòng nhập tên!");
             
             if (!db[name]) {
                 db[name] = { coins: 0, normalUnlocked: false, hardUnlocked: false };
-                localStorage.setItem("mario_pc_db", JSON.stringify(db));
+                localStorage.setItem("mario_responsive_db", JSON.stringify(db));
             }
             currentUser = name;
             showMenu();
@@ -121,16 +156,7 @@
             else { bHard.disabled = true; bHard.innerText = "3. HARD (Khóa 🔒)"; }
         }
 
-        function toggleFullScreen() {
-            let elem = document.getElementById("gameContainer");
-            if (!document.fullscreenElement) {
-                elem.requestFullscreen().catch(err => alert("Không thể bật toàn màn hình: " + err.message));
-            } else {
-                document.exitFullscreen();
-            }
-        }
-
-        // Âm thanh Web Audio API
+        // Âm thanh
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSound(type) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -143,42 +169,42 @@
             if (type === 'jump') {
                 osc.type = 'square';
                 osc.frequency.setValueAtTime(180, now);
-                osc.frequency.exponentialRampToValueAtTime(700, now + 0.12);
-                gain.gain.setValueAtTime(0.08, now);
+                osc.frequency.exponentialRampToValueAtTime(650, now + 0.12);
+                gain.gain.setValueAtTime(0.06, now);
                 gain.gain.linearRampToValueAtTime(0, now + 0.12);
                 osc.start(now); osc.stop(now + 0.12);
             } else if (type === 'coin') {
                 osc.type = 'square';
                 osc.frequency.setValueAtTime(987, now);
                 osc.frequency.setValueAtTime(1318, now + 0.08);
-                gain.gain.setValueAtTime(0.08, now);
+                gain.gain.setValueAtTime(0.06, now);
                 gain.gain.linearRampToValueAtTime(0, now + 0.2);
                 osc.start(now); osc.stop(now + 0.2);
             } else if (type === 'win') {
                 osc.type = 'triangle';
                 osc.frequency.setValueAtTime(440, now);
                 osc.frequency.setValueAtTime(880, now + 0.15);
-                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.setValueAtTime(0.1, now);
                 gain.gain.linearRampToValueAtTime(0, now + 0.4);
                 osc.start(now); osc.stop(now + 0.4);
             }
         }
 
-        // Game State
         let isPlaying = false;
         let mode = 'easy';
         let levelCoins = 0;
-        let worldWidth = 2000;
+        let worldWidth = 1600;
         let cameraX = 0;
 
-        let mario = { x: 50, y: 300, w: 32, h: 48, dx: 0, dy: 0, speed: 5, gravity: 0.8, isGrounded: false };
+        let mario = { x: 40, y: 240, w: 24, h: 36, dx: 0, dy: 0, speed: 4, gravity: 0.6, isGrounded: false };
         let keys = { left: false, right: false };
 
         let pipes = [];
         let blocks = [];
         let enemies = [];
         let gaps = [];
-        let flagX = 1800;
+        let clouds = [];
+        let flagX = 1450;
 
         function startGame(selectedMode) {
             mode = selectedMode;
@@ -191,13 +217,13 @@
 
             document.getElementById("menuScreen").style.display = "none";
 
-            if (mode === 'easy') { worldWidth = 2000; mario.speed = 4.8; mario.gravity = 0.75; }
-            else if (mode === 'normal') { worldWidth = 3000; mario.speed = 5.5; mario.gravity = 0.85; }
-            else if (mode === 'hard') { worldWidth = 4500; mario.speed = 6.5; mario.gravity = 1.0; }
+            if (mode === 'easy') { worldWidth = 1600; mario.speed = 3.8; mario.gravity = 0.55; }
+            else if (mode === 'normal') { worldWidth = 2400; mario.speed = 4.3; mario.gravity = 0.62; }
+            else if (mode === 'hard') { worldWidth = 3500; mario.speed = 5.0; mario.gravity = 0.72; }
 
-            flagX = worldWidth - 250;
-            mario.x = 50;
-            mario.y = 300;
+            flagX = worldWidth - 200;
+            mario.x = 40;
+            mario.y = 240;
             mario.dx = 0;
             mario.dy = 0;
 
@@ -205,26 +231,29 @@
         }
 
         function generateMap() {
-            pipes = []; blocks = []; enemies = []; gaps = [];
-            let pipeCount = mode === 'easy' ? 4 : (mode === 'normal' ? 7 : 12);
+            pipes = []; blocks = []; enemies = []; gaps = []; clouds = [];
+            let pipeCount = mode === 'easy' ? 4 : (mode === 'normal' ? 6 : 10);
 
             for (let i = 0; i < pipeCount; i++) {
-                let px = 400 + i * 320 + Math.random() * 80;
-                if (px > flagX - 200) break;
+                let px = 300 + i * 260 + Math.random() * 60;
+                if (px > flagX - 150) break;
 
-                let ph = (mode === 'hard' && Math.random() > 0.5) ? 120 : 80;
-                pipes.push({ x: px, y: 360 - ph, w: 64, h: ph });
+                let ph = (mode === 'hard' && Math.random() > 0.5) ? 90 : 60;
+                pipes.push({ x: px, y: 280 - ph, w: 48, h: ph });
 
-                blocks.push({ x: px - 60, y: 220, w: 32, h: 32, hit: false });
-
-                enemies.push({ x: px + 100, y: 328, w: 32, h: 32, dir: -1, alive: true });
+                blocks.push({ x: px - 45, y: 170, w: 24, h: 24, hit: false });
+                enemies.push({ x: px + 80, y: 256, w: 24, h: 24, dir: -1, alive: true });
             }
 
             if (mode === 'hard') {
-                gaps.push({ x: 1600, w: 90 });
-                gaps.push({ x: 2800, w: 110 });
+                gaps.push({ x: 1200, w: 70 });
+                gaps.push({ x: 2200, w: 80 });
             } else if (mode === 'normal') {
-                gaps.push({ x: 1800, w: 80 });
+                gaps.push({ x: 1400, w: 60 });
+            }
+
+            for (let cx = 50; cx < worldWidth; cx += 200) {
+                clouds.push({ x: cx + Math.random() * 40, y: 30 + Math.random() * 20 });
             }
         }
 
@@ -246,33 +275,33 @@
                 }
             });
 
-            // Trọng lực
+            // Trọng lực & Nhảy
             mario.dy += mario.gravity;
             mario.y += mario.dy;
             mario.isGrounded = false;
 
-            // Kiểm tra rơi hố
-            let overGap = gaps.some(g => mario.x + 16 >= g.x && mario.x + 16 <= g.x + g.w);
-            if (overGap && mario.y + mario.h >= 360) {
-                if (mario.y > 500) {
-                    mario.x = 50; mario.y = 300; // Reset khi rơi vực
+            // Kiểm tra rớt hố
+            let overGap = gaps.some(g => mario.x + 12 >= g.x && mario.x + 12 <= g.x + g.w);
+            if (overGap && mario.y + mario.h >= 280) {
+                if (mario.y > 400) {
+                    mario.x = 40; mario.y = 240;
                 }
-            } else if (mario.y + mario.h >= 360) {
-                mario.y = 360 - mario.h;
+            } else if (mario.y + mario.h >= 280) {
+                mario.y = 280 - mario.h;
                 mario.dy = 0;
                 mario.isGrounded = true;
             }
 
             // Đứng trên ống cống
             pipes.forEach(p => {
-                if (mario.x + mario.w > p.x && mario.x < p.x + p.w && mario.y + mario.h >= p.y && mario.y + mario.h <= p.y + 16 && mario.dy >= 0) {
+                if (mario.x + mario.w > p.x && mario.x < p.x + p.w && mario.y + mario.h >= p.y && mario.y + mario.h <= p.y + 12 && mario.dy >= 0) {
                     mario.y = p.y - mario.h;
                     mario.dy = 0;
                     mario.isGrounded = true;
                 }
             });
 
-            // Đập hộp xu ?
+            // Đập hộp ?
             blocks.forEach(b => {
                 if (mario.x < b.x + b.w && mario.x + mario.w > b.x && mario.y <= b.y + b.h && mario.y >= b.y && mario.dy < 0) {
                     mario.dy = 2;
@@ -287,23 +316,21 @@
             // Kẻ địch
             enemies.forEach(e => {
                 if (!e.alive) return;
-                e.x += e.dir * 1.2;
-                if (e.x < 200 || e.x > worldWidth - 200) e.dir *= -1;
+                e.x += e.dir * 1.0;
+                if (e.x < 100 || e.x > worldWidth - 100) e.dir *= -1;
 
-                if (mario.x < e.x + e.w && mario.x + mario.w > e.x && mario.y + mario.h >= e.y && mario.y + mario.h <= e.y + 16 && mario.dy > 0) {
+                if (mario.x < e.x + e.w && mario.x + mario.w > e.x && mario.y + mario.h >= e.y && mario.y + mario.h <= e.y + 12 && mario.dy > 0) {
                     e.alive = false;
-                    mario.dy = -10;
+                    mario.dy = -8;
                 } else if (mario.x < e.x + e.w && mario.x + mario.w > e.x && mario.y < e.y + e.h && mario.y + mario.h > e.y) {
-                    mario.x = 50; mario.y = 300; // Reset khi chạm quái
+                    mario.x = 40; mario.y = 240;
                 }
             });
 
-            // Camera theo Mario
             cameraX = mario.x - canvas.width / 2;
             if (cameraX < 0) cameraX = 0;
             if (cameraX > worldWidth - canvas.width) cameraX = worldWidth - canvas.width;
 
-            // Về đích
             if (mario.x >= flagX) {
                 winGame();
             }
@@ -319,7 +346,7 @@
             if (mode === 'easy') u.normalUnlocked = true;
             if (mode === 'normal') u.hardUnlocked = true;
 
-            localStorage.setItem("mario_pc_db", JSON.stringify(db));
+            localStorage.setItem("mario_responsive_db", JSON.stringify(db));
 
             document.getElementById("winCoinsEarned").innerText = `🪙 +${levelCoins} Xu kiếm được`;
             document.getElementById("winTotalCoins").innerText = `💰 Tổng xu tài khoản (${currentUser}): ${u.coins}`;
@@ -331,30 +358,42 @@
             ctx.save();
             ctx.translate(-cameraX, 0);
 
-            // 1. Mặt đất
+            // 1. Mây trời HD
+            ctx.fillStyle = "#fff";
+            clouds.forEach(c => {
+                ctx.fillRect(c.x + 4, c.y, 36, 14);
+                ctx.fillRect(c.x, c.y + 4, 44, 8);
+            });
+
+            // 2. Mặt đất HD
             ctx.fillStyle = "#c84c0c";
-            for (let x = 0; x < worldWidth; x += 32) {
+            for (let x = 0; x < worldWidth; x += 24) {
                 let inGap = gaps.some(g => x >= g.x && x < g.x + g.w);
                 if (!inGap) {
-                    ctx.fillRect(x, 360, 32, 90);
+                    ctx.fillRect(x, 280, 24, 80);
                     ctx.strokeStyle = "#000";
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(x, 360, 32, 90);
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(x, 280, 24, 80);
+                    ctx.fillStyle = "#fc9838";
+                    ctx.fillRect(x + 2, 282, 20, 3);
+                    ctx.fillStyle = "#c84c0c";
                 }
             }
 
-            // 2. Ống cống xanh
+            // 3. Ống cống xanh HD
             pipes.forEach(p => {
+                ctx.fillStyle = "#008800";
+                ctx.fillRect(p.x + p.w - 12, p.y, 12, p.h);
                 ctx.fillStyle = "#00a800";
-                ctx.fillRect(p.x, p.y, p.w, p.h);
+                ctx.fillRect(p.x, p.y, p.w - 12, p.h);
                 ctx.fillStyle = "#00d800";
-                ctx.fillRect(p.x - 4, p.y, p.w + 8, 16);
+                ctx.fillRect(p.x - 3, p.y, p.w + 6, 12);
                 ctx.strokeStyle = "#000";
                 ctx.lineWidth = 2;
                 ctx.strokeRect(p.x, p.y, p.w, p.h);
             });
 
-            // 3. Hộp xu ?
+            // 4. Hộp ? HD
             blocks.forEach(b => {
                 ctx.fillStyle = b.hit ? "#808080" : "#fc9838";
                 ctx.fillRect(b.x, b.y, b.w, b.h);
@@ -362,42 +401,52 @@
                 ctx.lineWidth = 2;
                 ctx.strokeRect(b.x, b.y, b.w, b.h);
                 ctx.fillStyle = "#000";
-                ctx.font = "bold 20px Arial";
-                ctx.fillText(b.hit ? "" : "?", b.x + 8, b.y + 24);
+                ctx.font = "bold 14px monospace";
+                ctx.fillText(b.hit ? "" : "?", b.x + 7, b.y + 17);
             });
 
-            // 4. Quái Goomba
+            // 5. Quái Goomba HD
             enemies.forEach(e => {
                 if (!e.alive) return;
                 ctx.fillStyle = "#a81000";
-                ctx.fillRect(e.x, e.y, e.w, e.h);
+                ctx.fillRect(e.x + 3, e.y, 18, 12);
+                ctx.fillRect(e.x, e.y + 6, 24, 10);
                 ctx.fillStyle = "#fff";
-                ctx.fillRect(e.x + 4, e.y + 6, 8, 8);
-                ctx.fillRect(e.x + 20, e.y + 6, 8, 8);
+                ctx.fillRect(e.x + 3, e.y + 6, 6, 6);
+                ctx.fillRect(e.x + 15, e.y + 6, 6, 6);
+                ctx.fillStyle = "#000";
+                ctx.fillRect(e.x + 2, e.y + 18, 8, 6);
+                ctx.fillRect(e.x + 14, e.y + 18, 8, 6);
             });
 
-            // 5. Cột cờ
+            // 6. Cột cờ
             ctx.fillStyle = "#fff";
-            ctx.fillRect(flagX, 120, 8, 240);
+            ctx.fillRect(flagX, 100, 6, 180);
             ctx.fillStyle = "#00d800";
-            ctx.fillRect(flagX + 8, 120, 32, 24);
+            ctx.fillRect(flagX + 6, 100, 24, 16);
 
-            // 6. Mario
-            ctx.fillStyle = "#e40058";
-            ctx.fillRect(mario.x + 4, mario.y, 24, 12);
-            ctx.fillStyle = "#fc9838";
-            ctx.fillRect(mario.x + 4, mario.y + 12, 24, 12);
-            ctx.fillStyle = "#0000d8";
-            ctx.fillRect(mario.x + 4, mario.y + 24, 24, 24);
+            // 7. Mario HD chuẩn Pixel Art
+            let mx = mario.x;
+            let my = mario.y;
+            ctx.fillStyle = "#e40058"; // Mũ đỏ
+            ctx.fillRect(mx + 3, my, 18, 7);
+            ctx.fillStyle = "#fc9838"; // Mặt
+            ctx.fillRect(mx + 4, my + 7, 16, 9);
+            ctx.fillStyle = "#68381c"; // Râu
+            ctx.fillRect(mx + 12, my + 11, 8, 3);
+            ctx.fillStyle = "#e40058"; // Áo
+            ctx.fillRect(mx + 3, my + 16, 18, 9);
+            ctx.fillStyle = "#0000d8"; // Quần yếm
+            ctx.fillRect(mx + 4, my + 25, 16, 11);
 
             ctx.restore();
 
-            // UI Xu & Độ khó trên máy tính
+            // HUD UI
             if (isPlaying) {
                 ctx.fillStyle = "#fff";
-                ctx.font = "bold 18px Arial";
-                ctx.fillText(`🪙 XU: ${levelCoins}`, 20, 35);
-                ctx.fillText(`CHẾ ĐỘ: ${mode.toUpperCase()}`, 630, 35);
+                ctx.font = "bold 14px monospace";
+                ctx.fillText(`COINS: ${levelCoins}`, 15, 25);
+                ctx.fillText(`MODE: ${mode.toUpperCase()}`, 500, 25);
             }
         }
 
@@ -407,12 +456,12 @@
             requestAnimationFrame(gameLoop);
         }
 
-        // Bắt sự kiện phím điều khiển PC
+        // Bàn phím máy tính
         window.addEventListener("keydown", e => {
             if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") keys.left = true;
             if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") keys.right = true;
             if ((e.key === "ArrowUp" || e.key === " " || e.key === "w" || e.key === "W") && mario.isGrounded) {
-                mario.dy = -15;
+                mario.dy = -11.5;
                 mario.isGrounded = false;
                 playSound('jump');
             }
@@ -421,6 +470,25 @@
         window.addEventListener("keyup", e => {
             if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") keys.left = false;
             if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") keys.right = false;
+        });
+
+        // Nút cảm ứng điện thoại
+        function bindTouch(btnId, keyName) {
+            let b = document.getElementById(btnId);
+            b.addEventListener("touchstart", (e) => { e.preventDefault(); keys[keyName] = true; });
+            b.addEventListener("touchend", (e) => { e.preventDefault(); keys[keyName] = false; });
+            b.addEventListener("mousedown", () => keys[keyName] = true);
+            b.addEventListener("mouseup", () => keys[keyName] = false);
+        }
+        bindTouch("btnLeft", "left");
+        bindTouch("btnRight", "right");
+
+        document.getElementById("btnJump").addEventListener("click", () => {
+            if (mario.isGrounded) {
+                mario.dy = -11.5;
+                mario.isGrounded = false;
+                playSound('jump');
+            }
         });
 
         gameLoop();
