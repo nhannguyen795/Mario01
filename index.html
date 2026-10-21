@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Super Mario Bros - HD Detailed Edition</title>
+    <title>Super Mario Bros - Fully Randomized Map</title>
     <style>
-        * { box-sizing: border-box; touch-action: manipulation; user-select: none; }
+        * { box-sizing: border-box; touch-action: none; user-select: none; }
         body { margin: 0; padding: 5px; background: #000; text-align: center; font-family: 'Courier New', Courier, monospace; color: #fff; }
         
         .game-wrapper {
@@ -92,7 +92,7 @@
         <!-- 1. ĐĂNG NHẬP -->
         <div id="loginScreen" class="overlay">
             <h1>SUPER MARIO BROS</h1>
-            <h3>HD DETAILED EDITION</h3>
+            <h3>RANDOMIZED MAP EDITION</h3>
             <input type="text" id="userInput" placeholder="Nhập tên tài khoản...">
             <button class="btn-ui" style="background:#00a800;" onclick="handleLogin()">VÀO CHƠI (0 XU) ➔</button>
         </div>
@@ -128,10 +128,10 @@
     <!-- NÚT ĐIỀU KHIỂN ĐIỆN THOẠI -->
     <div class="touch-controls">
         <div class="d-pad">
-            <button class="btn-ctrl" id="btnLeft">◄</button>
-            <button class="btn-ctrl" id="btnRight">►</button>
+            <button class="btn-ctrl" id="btnLeft" data-key="left">◄</button>
+            <button class="btn-ctrl" id="btnRight" data-key="right">►</button>
         </div>
-        <button class="btn-ctrl btn-jump" id="btnJump">NHẢY</button>
+        <button class="btn-ctrl btn-jump" id="btnJump" data-key="jump">NHẢY</button>
     </div>
 
     <div class="pc-guide">
@@ -143,14 +143,14 @@
         const ctx = canvas.getContext("2d");
 
         let currentUser = null;
-        let db = JSON.parse(localStorage.getItem("mario_hddetailed_db") || "{}");
+        let db = JSON.parse(localStorage.getItem("mario_randommap_db") || "{}");
 
         function handleLogin() {
             let name = document.getElementById("userInput").value.trim();
             if (!name) return alert("Vui lòng nhập tên tài khoản!");
             if (!db[name]) {
                 db[name] = { coins: 0, normalUnlocked: false, hardUnlocked: false };
-                localStorage.setItem("mario_hddetailed_db", JSON.stringify(db));
+                localStorage.setItem("mario_randommap_db", JSON.stringify(db));
             }
             currentUser = name;
             showMenu();
@@ -315,9 +315,9 @@
             document.getElementById("menuScreen").style.display = "none";
             document.getElementById("deathOverlay").style.display = "none";
 
-            if (mode === 'easy') { worldWidth = 1800; mario.speed = 3.8; mario.gravity = 0.55; }
-            else if (mode === 'normal') { worldWidth = 2600; mario.speed = 4.3; mario.gravity = 0.62; }
-            else if (mode === 'hard') { worldWidth = 3600; mario.speed = 5.0; mario.gravity = 0.72; }
+            if (mode === 'easy') { worldWidth = 2000; mario.speed = 3.8; mario.gravity = 0.55; }
+            else if (mode === 'normal') { worldWidth = 3000; mario.speed = 4.3; mario.gravity = 0.62; }
+            else if (mode === 'hard') { worldWidth = 4200; mario.speed = 5.0; mario.gravity = 0.72; }
 
             flagX = worldWidth - 250;
             mario.x = 40; mario.y = 244; mario.w = 24; mario.h = 36;
@@ -325,52 +325,62 @@
             mario.state = 'small';
             mario.invulnerableTimer = 0; mario.starTimer = 0;
 
-            generateMap();
+            generateRandomMap();
             startBGM();
         }
 
-        function generateMap() {
+        // HỆ THỐNG RANDOM MAP HOÀN TOÀN MỚI MỖI KHI CHƠI
+        function generateRandomMap() {
             pipes = []; blocks = []; items = []; enemies = []; gaps = []; clouds = []; mountains = []; bushes = [];
-            let pipeCount = mode === 'easy' ? 5 : (mode === 'normal' ? 8 : 12);
-            let currentX = 450;
+            
+            // Số lượng chướng ngại vật phụ thuộc vào độ dài và độ khó
+            let sectionCount = Math.floor(worldWidth / 250);
+            let currentX = 450; // Vùng xuất phát an toàn
 
-            for (let i = 0; i < pipeCount; i++) {
+            for (let i = 0; i < sectionCount; i++) {
                 if (currentX > flagX - 300) break;
 
-                let ph = (mode === 'hard' && Math.random() > 0.5) ? 80 : 54;
-                pipes.push({ x: currentX, y: 280 - ph, w: 48, h: ph });
+                // Random ngẫu nhiên xuất hiện ống cống hoặc hố vực hoặc khoảng trống
+                let randType = Math.random();
 
-                let blockType = 'coin';
-                let rand = Math.random();
-                if (rand < 0.25) blockType = 'mushroom';
-                else if (rand < 0.4) blockType = 'star';
+                if (randType < 0.45) {
+                    // Tạo ống cống
+                    let ph = Math.random() > 0.5 ? 50 : 75;
+                    pipes.push({ x: currentX, y: 280 - ph, w: 48, h: ph });
 
-                // Chuỗi gạch treo lơ lửng
-                blocks.push({ x: currentX - 60, y: 170, w: 24, h: 24, hit: false, content: blockType, type: 'question' });
-                blocks.push({ x: currentX - 84, y: 170, w: 24, h: 24, hit: false, content: 'brick', type: 'brick' });
-                blocks.push({ x: currentX - 36, y: 170, w: 24, h: 24, hit: false, content: 'brick', type: 'brick' });
+                    // Tạo khối hỏi chấm trên ống cống
+                    let blockType = 'coin';
+                    let rItem = Math.random();
+                    if (rItem < 0.25) blockType = 'mushroom';
+                    else if (rItem < 0.4) blockType = 'star';
 
-                let enemyType = (Math.random() > 0.4) ? 'goomba' : 'koopa';
-                enemies.push({ 
-                    x: currentX + 100, y: 256, w: 24, h: 24, 
-                    type: enemyType, dir: -1, alive: true, state: 'walking', shellSpeed: 0 
-                });
+                    blocks.push({ x: currentX - 20, y: 165 + (Math.random() > 0.5 ? 0 : -20), w: 24, h: 24, hit: false, content: blockType, type: 'question' });
+                    
+                    // Kẻ địch tuần tra quanh ống cống
+                    let enemyType = Math.random() > 0.4 ? 'goomba' : 'koopa';
+                    enemies.push({ x: currentX + 70, y: 256, w: 24, h: 24, type: enemyType, dir: -1, alive: true, state: 'walking', shellSpeed: 0 });
 
-                currentX += Math.floor(Math.random() * 140) + 240; 
+                } else if (randType < 0.65 && mode !== 'easy') {
+                    // Tạo hố vực thẫm ngẫu nhiên (chỉ ở chế độ Normal và Hard)
+                    let gWidth = mode === 'hard' ? (50 + Math.floor(Math.random() * 40)) : 50;
+                    gaps.push({ x: currentX, w: gWidth });
+                    currentX += gWidth + 50;
+                } else {
+                    // Tạo các hàng gạch lơ lửng và quái vật tự do
+                    blocks.push({ x: currentX, y: 170, w: 24, h: 24, hit: false, content: 'coin', type: 'question' });
+                    blocks.push({ x: currentX + 24, y: 170, w: 24, h: 24, hit: false, content: 'brick', type: 'brick' });
+                    
+                    enemies.push({ x: currentX + 80, y: 256, w: 24, h: 24, type: 'goomba', dir: -1, alive: true, state: 'walking', shellSpeed: 0 });
+                }
+
+                currentX += Math.floor(Math.random() * 180) + 200;
             }
 
-            if (mode === 'hard') {
-                gaps.push({ x: 1200, w: 72 });
-                gaps.push({ x: 2200, w: 84 });
-            } else if (mode === 'normal') {
-                gaps.push({ x: 1400, w: 60 });
-            }
-
-            // Trang trí núi đồi, mây và bụi cây ngẫu nhiên
-            for (let cx = 20; cx < worldWidth; cx += 180) {
-                clouds.push({ x: cx + Math.random() * 50, y: 20 + Math.random() * 40, w: 48 + Math.random() * 20 });
-                mountains.push({ x: cx + 30, w: 120, h: 60 + Math.random() * 40 });
-                bushes.push({ x: cx + 110, w: 48 });
+            // Tạo phong cảnh nền (mây, núi, bụi cỏ) ngẫu nhiên theo chiều dài map
+            for (let cx = 20; cx < worldWidth; cx += 160) {
+                clouds.push({ x: cx + Math.random() * 40, y: 20 + Math.random() * 40, w: 48 + Math.random() * 20 });
+                mountains.push({ x: cx + 20, w: 100 + Math.random() * 40, h: 50 + Math.random() * 50 });
+                bushes.push({ x: cx + 90, w: 40 + Math.random() * 20 });
             }
         }
 
@@ -500,7 +510,7 @@
                 if (!e.alive) return;
 
                 if (e.state === 'walking') {
-                    e.x += e.dir * 1.0;
+                    e.x += e.dir * 1.1;
                     if (e.x < 100 || e.x > worldWidth - 100) e.dir *= -1;
                 } else if (e.state === 'shell_moving') {
                     e.x += e.shellSpeed;
@@ -556,20 +566,18 @@
             if (mode === 'easy') u.normalUnlocked = true;
             if (mode === 'normal') u.hardUnlocked = true;
 
-            localStorage.setItem("mario_hddetailed_db", JSON.stringify(db));
+            localStorage.setItem("mario_randommap_db", JSON.stringify(db));
 
             document.getElementById("winCoinsEarned").innerText = `🪙 +${levelCoins} Xu kiếm được`;
             document.getElementById("winTotalCoins").innerText = `💰 Tổng xu tài khoản (${currentUser}): ${u.coins}`;
             document.getElementById("winScreen").style.display = "flex";
         }
 
-        // HÀM VẼ ĐỒ HỌA HD CHI TIẾT
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.save();
             ctx.translate(-cameraX, 0);
 
-            // 1. Núi đồi phía xa
             mountains.forEach(m => {
                 ctx.fillStyle = "#00a800";
                 ctx.beginPath();
@@ -585,7 +593,6 @@
                 ctx.fill();
             });
 
-            // 2. Mây tầng chi tiết
             ctx.fillStyle = "#ffffff";
             clouds.forEach(c => {
                 ctx.fillRect(c.x + 6, c.y, c.w - 12, 16);
@@ -595,7 +602,6 @@
                 ctx.fillStyle = "#ffffff";
             });
 
-            // 3. Bụi cỏ chi tiết
             bushes.forEach(b => {
                 ctx.fillStyle = "#00d800";
                 ctx.fillRect(b.x, 268, b.w, 12);
@@ -603,17 +609,14 @@
                 ctx.fillRect(b.x + 4, 264, b.w - 8, 4);
             });
 
-            // 4. Mặt đất HD với viền cỏ xanh và gạch caro nâu
             for (let x = 0; x < worldWidth; x += 24) {
                 let inGap = gaps.some(g => x >= g.x && x < g.x + g.w);
                 if (!inGap) {
-                    // Lớp đất nâu
                     ctx.fillStyle = "#c84c0c";
                     ctx.fillRect(x, 280, 24, 80);
                     ctx.strokeStyle = "#000000";
                     ctx.lineWidth = 1;
                     ctx.strokeRect(x, 280, 24, 80);
-                    // Lớp mặt cỏ tươi sáng
                     ctx.fillStyle = "#00d800";
                     ctx.fillRect(x, 280, 24, 4);
                     ctx.fillStyle = "#fc9838";
@@ -621,20 +624,17 @@
                 }
             }
 
-            // 5. Hiệu ứng hạt bụi
             ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
             dustParticles.forEach(p => ctx.fillRect(p.x, p.y, p.size, p.size));
 
-            // 6. Ống cống HD nổi khối 3D
             pipes.forEach(p => {
                 ctx.fillStyle = "#00a800";
                 ctx.fillRect(p.x, p.y, p.w, p.h);
-                ctx.fillStyle = "#00d800"; // Vệt sáng kim loại
+                ctx.fillStyle = "#00d800";
                 ctx.fillRect(p.x + 6, p.y, 8, p.h);
-                ctx.fillStyle = "#005800"; // Bóng tối
+                ctx.fillStyle = "#005800";
                 ctx.fillRect(p.x + p.w - 8, p.y, 8, p.h);
 
-                // Nắp ống cống
                 ctx.fillStyle = "#00a800";
                 ctx.fillRect(p.x - 4, p.y, p.w + 8, 14);
                 ctx.fillStyle = "#00d800";
@@ -648,7 +648,6 @@
                 ctx.strokeRect(p.x - 4, p.y, p.w + 8, 14);
             });
 
-            // 7. Khối hộp ? & Gạch đỏ HD
             blocks.forEach(b => {
                 if (b.type === 'question') {
                     ctx.fillStyle = b.hit ? "#808080" : "#fc9838";
@@ -658,7 +657,7 @@
                     ctx.strokeRect(b.x, b.y, b.w, b.h);
 
                     if (!b.hit) {
-                        ctx.fillStyle = "#a82800"; // Đinh 4 góc
+                        ctx.fillStyle = "#a82800";
                         ctx.fillRect(b.x + 2, b.y + 2, 2, 2);
                         ctx.fillRect(b.x + 20, b.y + 2, 2, 2);
                         ctx.fillRect(b.x + 2, b.y + 20, 2, 2);
@@ -677,7 +676,6 @@
                 }
             });
 
-            // 8. Vật phẩm Nấm / Ngôi sao HD
             items.forEach(it => {
                 if (it.type === 'mushroom') {
                     ctx.fillStyle = "#e40058";
@@ -696,7 +694,6 @@
                 }
             });
 
-            // 9. Kẻ địch Goomba & Koopa HD
             enemies.forEach(e => {
                 if (!e.alive) return;
                 if (e.type === 'goomba') {
@@ -705,7 +702,7 @@
                     ctx.fillRect(e.x, e.y + 6, 24, 10);
                     ctx.fillStyle = "#ffffff";
                     ctx.fillRect(e.x + 3, e.y + 6, 5, 6);
-                    ctx.fillRect(e.x + 16, e.y + 6, 5, 6);
+                    ctx.fillRect(e.x + 15, e.y + 6, 5, 6);
                     ctx.fillStyle = "#000000";
                     ctx.fillRect(e.x + 5, e.y + 8, 2, 4);
                     ctx.fillRect(e.x + 17, e.y + 8, 2, 4);
@@ -719,7 +716,6 @@
                 }
             });
 
-            // 10. Cột cờ & Lâu đài đích đến HD
             ctx.fillStyle = "#ffffff";
             ctx.fillRect(flagX, 80, 6, 200);
             ctx.fillStyle = "#00d800";
@@ -728,39 +724,31 @@
             ctx.fill();
             ctx.fillRect(flagX + 6, 90, 28, 18);
 
-            // Lâu đài gạch
             ctx.fillStyle = "#c84c0c";
             ctx.fillRect(flagX + 50, 180, 80, 100);
             ctx.fillStyle = "#000000";
-            ctx.fillRect(flagX + 75, 230, 30, 50); // Cửa lâu đài
+            ctx.fillRect(flagX + 75, 230, 30, 50);
 
-            // 11. Mario HD Chi tiết
             if (!(mario.invulnerableTimer > 0 && Math.floor(Date.now() / 80) % 2 === 0)) {
                 let mx = mario.x;
                 let my = mario.y;
 
-                // Nón
                 ctx.fillStyle = (mario.starTimer > 0 && Math.floor(Date.now() / 50) % 2 === 0) ? "#f8d800" : "#e40058";
                 ctx.fillRect(mx + 3, my, 18, 7);
-                // Mặt & Mắt
                 ctx.fillStyle = "#fc9838";
                 ctx.fillRect(mx + 4, my + 7, 16, 9);
                 ctx.fillStyle = "#000";
                 ctx.fillRect(mx + (mario.facing === 'right' ? 14 : 6), my + 9, 3, 3);
-                // Râu
                 ctx.fillStyle = "#68381c";
                 ctx.fillRect(mx + (mario.facing === 'right' ? 10 : 4), my + 12, 10, 3);
-                // Áo đỏ
                 ctx.fillStyle = (mario.starTimer > 0) ? "#00d800" : "#e40058";
                 ctx.fillRect(mx + 3, my + 16, 18, 9);
-                // Quần yếm xanh
                 ctx.fillStyle = "#0000d8";
                 ctx.fillRect(mx + 4, my + 25, 16, mario.h - 25);
             }
 
             ctx.restore();
 
-            // HUD
             if (isPlaying) {
                 ctx.fillStyle = "#fff";
                 ctx.font = "bold 14px monospace";
@@ -792,22 +780,49 @@
             if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") keys.right = false;
         });
 
-        function bindTouch(btnId, keyName) {
-            let b = document.getElementById(btnId);
-            b.addEventListener("touchstart", (e) => { e.preventDefault(); keys[keyName] = true; });
-            b.addEventListener("touchend", (e) => { e.preventDefault(); keys[keyName] = false; });
-            b.addEventListener("mousedown", () => keys[keyName] = true);
-            b.addEventListener("mouseup", () => keys[keyName] = false);
-        }
-        bindTouch("btnLeft", "left");
-        bindTouch("btnRight", "right");
+        const touchControls = document.querySelector('.touch-controls');
 
-        document.getElementById("btnJump").addEventListener("click", () => {
+        function handleTouch(e) {
+            e.preventDefault();
+            keys.left = false;
+            keys.right = false;
+
+            for (let i = 0; i < e.touches.length; i++) {
+                let target = document.elementFromPoint(e.touches[i].clientX, e.touches[i].clientY);
+                if (target && target.dataset.key) {
+                    let k = target.dataset.key;
+                    if (k === 'left') keys.left = true;
+                    if (k === 'right') keys.right = true;
+                }
+            }
+        }
+
+        touchControls.addEventListener("touchstart", handleTouch, { passive: false });
+        touchControls.addEventListener("touchmove", handleTouch, { passive: false });
+        touchControls.addEventListener("touchend", handleTouch, { passive: false });
+
+        document.getElementById("btnJump").addEventListener("touchstart", (e) => {
+            e.preventDefault();
             if (mario.isGrounded) {
                 mario.dy = -11.5;
                 mario.isGrounded = false;
                 playSound('jump');
             }
+        }, { passive: false });
+
+        document.querySelectorAll('[data-key]').forEach(btn => {
+            let k = btn.dataset.key;
+            btn.addEventListener("mousedown", () => {
+                if (k === 'jump' && mario.isGrounded) {
+                    mario.dy = -11.5;
+                    mario.isGrounded = false;
+                    playSound('jump');
+                } else if (k !== 'jump') {
+                    keys[k] = true;
+                }
+            });
+            btn.addEventListener("mouseup", () => { if (k !== 'jump') keys[k] = false; });
+            btn.addEventListener("mouseleave", () => { if (k !== 'jump') keys[k] = false; });
         });
 
         gameLoop();
