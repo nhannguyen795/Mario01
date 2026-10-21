@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Super Mario Bros Deluxe - Fixed Map</title>
+    <title>Super Mario Bros - HD Detailed Edition</title>
     <style>
         * { box-sizing: border-box; touch-action: manipulation; user-select: none; }
         body { margin: 0; padding: 5px; background: #000; text-align: center; font-family: 'Courier New', Courier, monospace; color: #fff; }
@@ -15,8 +15,8 @@
             margin: 0 auto;
             background: #5c94fc;
             border: 4px solid #fff;
-            border-radius: 6px;
-            box-shadow: 0 0 15px rgba(255,255,255,0.4);
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(255,255,255,0.4);
             overflow: hidden;
         }
 
@@ -43,6 +43,20 @@
         .overlay h1 { margin: 0 0 8px 0; color: #fff; text-shadow: 3px 3px #d80000; font-size: clamp(22px, 5vw, 34px); }
         .overlay h3 { margin: 4px 0 12px 0; font-size: clamp(12px, 3vw, 16px); color: #f8d800; text-shadow: 1px 1px #000; }
         
+        #deathOverlay {
+            display: none;
+            background: #000;
+            z-index: 20;
+        }
+        #deathOverlay h1 {
+            color: #d80000;
+            text-shadow: 3px 3px #550000;
+            font-size: clamp(30px, 7vw, 50px);
+            letter-spacing: 3px;
+            animation: pulse 1s infinite alternate;
+        }
+        #deathOverlay p { color: #aaa; font-size: 14px; margin-bottom: 20px; }
+
         input[type="text"] { width: 80%; max-width: 280px; padding: 10px; font-size: 15px; font-family: inherit; font-weight: bold; text-align: center; border: 2px solid #000; border-radius: 4px; margin-bottom: 10px; }
         
         .btn-ui { width: 80%; max-width: 280px; padding: 10px; margin: 4px 0; font-size: 14px; font-family: inherit; font-weight: bold; background: #000; color: #fff; border: 2px solid #fff; border-radius: 4px; cursor: pointer; box-shadow: 0 4px 0 #222; }
@@ -65,6 +79,11 @@
 
         .pc-guide { margin-top: 8px; font-size: 13px; color: #ccc; }
         .pc-guide span { color: #f8d800; font-weight: bold; }
+
+        @keyframes pulse {
+            from { transform: scale(0.95); opacity: 0.8; }
+            to { transform: scale(1.05); opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -73,7 +92,7 @@
         <!-- 1. ĐĂNG NHẬP -->
         <div id="loginScreen" class="overlay">
             <h1>SUPER MARIO BROS</h1>
-            <h3>TẠO TÀI KHOẢN MỚI</h3>
+            <h3>HD DETAILED EDITION</h3>
             <input type="text" id="userInput" placeholder="Nhập tên tài khoản...">
             <button class="btn-ui" style="background:#00a800;" onclick="handleLogin()">VÀO CHƠI (0 XU) ➔</button>
         </div>
@@ -82,13 +101,20 @@
         <div id="menuScreen" class="overlay" style="display: none;">
             <h1>CHỌN ĐỘ KHÓ</h1>
             <h3 id="userStatus">Tài khoản: Khách | 0 Xu</h3>
-            <button class="btn-ui" onclick="startGame('easy')">1. EASY (Dễ)</button>
-            <button class="btn-ui" id="btnNormal" onclick="startGame('normal')" disabled>2. MEDIUM (Khóa 🔒)</button>
-            <button class="btn-ui" id="btnHard" onclick="startGame('hard')" disabled>3. HARD (Khóa 🔒)</button>
+            <button class="btn-ui" onclick="startGame('easy')">1. EASY (3 Mạng ❤️❤️❤️)</button>
+            <button class="btn-ui" id="btnNormal" onclick="startGame('normal')" disabled>2. MEDIUM (2 Mạng ❤️❤️)</button>
+            <button class="btn-ui" id="btnHard" onclick="startGame('hard')" disabled>3. HARD (1 Mạng ❤️)</button>
             <button class="btn-ui" style="background:#d80000; margin-top:6px;" onclick="logout()">⬅ ĐỔI TÀI KHOẢN</button>
         </div>
 
-        <!-- 3. MÀN HÌNH CHIẾN THẮNG -->
+        <!-- 3. MÀN HÌNH CHẾT (YOU DIE) -->
+        <div id="deathOverlay" class="overlay">
+            <h1>YOU DIE 💀</h1>
+            <p>Mất sạch xu thu thập ở màn này!</p>
+            <button class="btn-ui" style="background:#d80000; border-color:#fff;" onclick="showMenu()">THỬ LẠI ↺</button>
+        </div>
+
+        <!-- 4. MÀN HÌNH CHIẾN THẮNG -->
         <div id="winScreen" class="overlay" style="display: none; background: rgba(0,0,0,0.95);">
             <h1 style="color:#f8d800;">STAGE CLEAR! 🚩</h1>
             <h3 id="winCoinsEarned">🪙 +0 Xu kiếm được</h3>
@@ -117,15 +143,14 @@
         const ctx = canvas.getContext("2d");
 
         let currentUser = null;
-        let db = JSON.parse(localStorage.getItem("mario_fixmap_db") || "{}");
+        let db = JSON.parse(localStorage.getItem("mario_hddetailed_db") || "{}");
 
         function handleLogin() {
             let name = document.getElementById("userInput").value.trim();
             if (!name) return alert("Vui lòng nhập tên tài khoản!");
-            
             if (!db[name]) {
                 db[name] = { coins: 0, normalUnlocked: false, hardUnlocked: false };
-                localStorage.setItem("mario_fixmap_db", JSON.stringify(db));
+                localStorage.setItem("mario_hddetailed_db", JSON.stringify(db));
             }
             currentUser = name;
             showMenu();
@@ -142,20 +167,21 @@
             let u = db[currentUser];
             document.getElementById("loginScreen").style.display = "none";
             document.getElementById("winScreen").style.display = "none";
+            document.getElementById("deathOverlay").style.display = "none";
             document.getElementById("menuScreen").style.display = "flex";
             document.getElementById("userStatus").innerText = `Tài khoản: ${currentUser} | 💰 ${u.coins} Xu`;
 
             let bNormal = document.getElementById("btnNormal");
             let bHard = document.getElementById("btnHard");
 
-            if (u.normalUnlocked) { bNormal.disabled = false; bNormal.innerText = "2. MEDIUM (Mở khóa)"; }
+            if (u.normalUnlocked) { bNormal.disabled = false; bNormal.innerText = "2. MEDIUM (2 Mạng ❤️❤️)"; }
             else { bNormal.disabled = true; bNormal.innerText = "2. MEDIUM (Khóa 🔒)"; }
 
-            if (u.hardUnlocked) { bHard.disabled = false; bHard.innerText = "3. HARD (Mở khóa)"; }
+            if (u.hardUnlocked) { bHard.disabled = false; bHard.innerText = "3. HARD (1 Mạng ❤️)"; }
             else { bHard.disabled = true; bHard.innerText = "3. HARD (Khóa 🔒)"; }
         }
 
-        // Âm thanh Web Audio API đầy đủ
+        // Âm thanh Web Audio API
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let bgmInterval = null;
 
@@ -163,22 +189,23 @@
             if (audioCtx.state === 'suspended') audioCtx.resume();
             if (bgmInterval) clearInterval(bgmInterval);
             let notes = [523.25, 587.33, 659.25, 523.25, 659.25, 783.99, 659.25, 523.25];
+            let starNotes = [783.99, 880, 987.77, 1046.50];
             let step = 0;
             bgmInterval = setInterval(() => {
                 if (!isPlaying) return;
                 let osc = audioCtx.createOscillator();
                 let gain = audioCtx.createGain();
                 osc.type = "square";
-                osc.frequency.value = notes[step];
+                osc.frequency.value = (mario.starTimer > 0) ? starNotes[step % starNotes.length] : notes[step % notes.length];
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
                 let now = audioCtx.currentTime;
                 osc.start(now);
                 gain.gain.setValueAtTime(0.04, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-                osc.stop(now + 0.12);
-                step = (step + 1) % notes.length;
-            }, 140);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + (mario.starTimer > 0 ? 0.08 : 0.12));
+                osc.stop(now + (mario.starTimer > 0 ? 0.08 : 0.12));
+                step++;
+            }, mario.starTimer > 0 ? 90 : 140);
         }
 
         function stopBGM() {
@@ -207,6 +234,20 @@
                 gain.gain.setValueAtTime(0.08, now);
                 gain.gain.linearRampToValueAtTime(0, now + 0.2);
                 osc.start(now); osc.stop(now + 0.2);
+            } else if (type === 'powerup') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(330, now);
+                osc.frequency.setValueAtTime(660, now + 0.1);
+                gain.gain.setValueAtTime(0.08, now);
+                gain.gain.linearRampToValueAtTime(0, now + 0.25);
+                osc.start(now); osc.stop(now + 0.25);
+            } else if (type === 'kick') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(120, now);
+                osc.frequency.exponentialRampToValueAtTime(30, now + 0.1);
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.linearRampToValueAtTime(0, now + 0.1);
+                osc.start(now); osc.stop(now + 0.1);
             } else if (type === 'win') {
                 stopBGM();
                 osc.type = 'triangle';
@@ -215,110 +256,165 @@
                 gain.gain.setValueAtTime(0.12, now);
                 gain.gain.linearRampToValueAtTime(0, now + 0.4);
                 osc.start(now); osc.stop(now + 0.4);
+            } else if (type === 'die') {
+                stopBGM();
+                let notes = [330, 311, 293, 261, 220];
+                notes.forEach((freq, index) => {
+                    let o = audioCtx.createOscillator();
+                    let g = audioCtx.createGain();
+                    o.type = "square";
+                    o.frequency.value = freq;
+                    o.connect(g);
+                    g.connect(audioCtx.destination);
+                    let startTime = now + index * 0.12;
+                    o.start(startTime);
+                    g.gain.setValueAtTime(0.1, startTime);
+                    g.gain.exponentialRampToValueAtTime(0.001, startTime + 0.1);
+                    o.stop(startTime + 0.1);
+                });
             }
         }
 
         let isPlaying = false;
         let mode = 'easy';
         let levelCoins = 0;
+        let lives = 3;
         let worldWidth = 1600;
         let cameraX = 0;
 
-        let mario = { x: 40, y: 240, w: 24, h: 36, dx: 0, dy: 0, speed: 4, gravity: 0.6, isGrounded: false, facing: 'right' };
+        let mario = { 
+            x: 40, y: 244, w: 24, h: 36, dx: 0, dy: 0, 
+            speed: 4, gravity: 0.6, isGrounded: false, facing: 'right',
+            state: 'small', invulnerableTimer: 0, starTimer: 0
+        };
         let keys = { left: false, right: false };
 
         let pipes = [];
         let blocks = [];
+        let items = [];
         let enemies = [];
         let gaps = [];
         let clouds = [];
+        let mountains = [];
+        let bushes = [];
         let dustParticles = [];
         let flagX = 1450;
 
-        function resetKeys() {
-            keys.left = false;
-            keys.right = false;
-            mario.dx = 0;
-        }
-
         function startGame(selectedMode) {
-            resetKeys();
+            keys.left = false; keys.right = false; mario.dx = 0;
             mode = selectedMode;
             isPlaying = true;
             levelCoins = 0;
             cameraX = 0;
             dustParticles = [];
 
+            if (mode === 'easy') lives = 3;
+            else if (mode === 'normal') lives = 2;
+            else if (mode === 'hard') lives = 1;
+
             document.getElementById("menuScreen").style.display = "none";
+            document.getElementById("deathOverlay").style.display = "none";
 
-            if (mode === 'easy') { worldWidth = 1600; mario.speed = 3.8; mario.gravity = 0.55; }
-            else if (mode === 'normal') { worldWidth = 2400; mario.speed = 4.3; mario.gravity = 0.62; }
-            else if (mode === 'hard') { worldWidth = 3500; mario.speed = 5.0; mario.gravity = 0.72; }
+            if (mode === 'easy') { worldWidth = 1800; mario.speed = 3.8; mario.gravity = 0.55; }
+            else if (mode === 'normal') { worldWidth = 2600; mario.speed = 4.3; mario.gravity = 0.62; }
+            else if (mode === 'hard') { worldWidth = 3600; mario.speed = 5.0; mario.gravity = 0.72; }
 
-            flagX = worldWidth - 200;
-            mario.x = 40;
-            mario.y = 240;
-            mario.dx = 0;
-            mario.dy = 0;
+            flagX = worldWidth - 250;
+            mario.x = 40; mario.y = 244; mario.w = 24; mario.h = 36;
+            mario.dx = 0; mario.dy = 0;
+            mario.state = 'small';
+            mario.invulnerableTimer = 0; mario.starTimer = 0;
 
             generateMap();
             startBGM();
         }
 
-        // TẠO BẢN ĐỒ AN TOÀN - KHÔNG BỊ KẸT LỖI XUẤT PHÁT
         function generateMap() {
-            pipes = []; blocks = []; enemies = []; gaps = []; clouds = [];
-            let pipeCount = mode === 'easy' ? 4 : (mode === 'normal' ? 6 : 10);
-
-            // Bắt đầu đặt ống cống từ x = 450 để khoảng xuất phát của Mario trống trải hoàn toàn
-            let currentX = 450; 
+            pipes = []; blocks = []; items = []; enemies = []; gaps = []; clouds = []; mountains = []; bushes = [];
+            let pipeCount = mode === 'easy' ? 5 : (mode === 'normal' ? 8 : 12);
+            let currentX = 450;
 
             for (let i = 0; i < pipeCount; i++) {
-                if (currentX > flagX - 250) break;
+                if (currentX > flagX - 300) break;
 
-                let ph = (mode === 'hard' && Math.random() > 0.5) ? 80 : 50;
+                let ph = (mode === 'hard' && Math.random() > 0.5) ? 80 : 54;
                 pipes.push({ x: currentX, y: 280 - ph, w: 48, h: ph });
 
-                // Hộp xu ?
-                blocks.push({ x: currentX - 50, y: 170, w: 24, h: 24, hit: false });
+                let blockType = 'coin';
+                let rand = Math.random();
+                if (rand < 0.25) blockType = 'mushroom';
+                else if (rand < 0.4) blockType = 'star';
 
-                // Kẻ địch Goomba
-                enemies.push({ x: currentX + 90, y: 256, w: 24, h: 24, dir: -1, alive: true });
+                // Chuỗi gạch treo lơ lửng
+                blocks.push({ x: currentX - 60, y: 170, w: 24, h: 24, hit: false, content: blockType, type: 'question' });
+                blocks.push({ x: currentX - 84, y: 170, w: 24, h: 24, hit: false, content: 'brick', type: 'brick' });
+                blocks.push({ x: currentX - 36, y: 170, w: 24, h: 24, hit: false, content: 'brick', type: 'brick' });
 
-                // Khoảng cách an toàn giữa các ống cống
-                currentX += Math.floor(Math.random() * 150) + 260; 
+                let enemyType = (Math.random() > 0.4) ? 'goomba' : 'koopa';
+                enemies.push({ 
+                    x: currentX + 100, y: 256, w: 24, h: 24, 
+                    type: enemyType, dir: -1, alive: true, state: 'walking', shellSpeed: 0 
+                });
+
+                currentX += Math.floor(Math.random() * 140) + 240; 
             }
 
-            // Đặt hố vực xa vùng xuất phát
             if (mode === 'hard') {
-                gaps.push({ x: 1300, w: 70 });
-                gaps.push({ x: 2300, w: 80 });
+                gaps.push({ x: 1200, w: 72 });
+                gaps.push({ x: 2200, w: 84 });
             } else if (mode === 'normal') {
-                gaps.push({ x: 1500, w: 60 });
+                gaps.push({ x: 1400, w: 60 });
             }
 
-            for (let cx = 50; cx < worldWidth; cx += 200) {
-                clouds.push({ x: cx + Math.random() * 40, y: 30 + Math.random() * 20 });
+            // Trang trí núi đồi, mây và bụi cây ngẫu nhiên
+            for (let cx = 20; cx < worldWidth; cx += 180) {
+                clouds.push({ x: cx + Math.random() * 50, y: 20 + Math.random() * 40, w: 48 + Math.random() * 20 });
+                mountains.push({ x: cx + 30, w: 120, h: 60 + Math.random() * 40 });
+                bushes.push({ x: cx + 110, w: 48 });
+            }
+        }
+
+        function handlePlayerDeath() {
+            if (mario.invulnerableTimer > 0) return;
+
+            if (mario.state === 'super') {
+                mario.state = 'small';
+                mario.h = 36;
+                mario.y += 12;
+                mario.invulnerableTimer = 90;
+                playSound('powerup');
+                return;
+            }
+
+            lives--;
+            if (lives > 0) {
+                mario.x = 40; mario.y = 244;
+                mario.dx = 0; mario.dy = 0;
+                mario.invulnerableTimer = 60;
+            } else {
+                isPlaying = false;
+                levelCoins = 0;
+                playSound('die');
+                document.getElementById("deathOverlay").style.display = "flex";
             }
         }
 
         function update() {
             if (!isPlaying) return;
 
+            if (mario.invulnerableTimer > 0) mario.invulnerableTimer--;
+            if (mario.starTimer > 0) {
+                mario.starTimer--;
+                if (mario.starTimer === 0) startBGM();
+            }
+
             mario.dx = 0;
-            if (keys.left) {
-                mario.dx = -mario.speed;
-                mario.facing = 'left';
-            }
-            if (keys.right) {
-                mario.dx = mario.speed;
-                mario.facing = 'right';
-            }
+            if (keys.left) { mario.dx = -mario.speed; mario.facing = 'left'; }
+            if (keys.right) { mario.dx = mario.speed; mario.facing = 'right'; }
 
             mario.x += mario.dx;
             if (mario.x < 0) mario.x = 0;
 
-            // Hạt bụi khi di chuyển
             if (mario.isGrounded && mario.dx !== 0 && Math.random() < 0.5) {
                 dustParticles.push({
                     x: mario.x + (mario.facing === 'right' ? 2 : mario.w - 4),
@@ -328,13 +424,9 @@
                 });
             }
 
-            dustParticles.forEach(p => {
-                p.life--;
-                p.y -= 0.3;
-            });
+            dustParticles.forEach(p => { p.life--; p.y -= 0.3; });
             dustParticles = dustParticles.filter(p => p.life > 0);
 
-            // Va chạm ống cống ngang
             pipes.forEach(p => {
                 if (mario.x < p.x + p.w && mario.x + mario.w > p.x && mario.y + mario.h > p.y) {
                     if (mario.dx > 0) mario.x = p.x - mario.w;
@@ -346,19 +438,15 @@
             mario.y += mario.dy;
             mario.isGrounded = false;
 
-            // Rơi hố
             let overGap = gaps.some(g => mario.x + 12 >= g.x && mario.x + 12 <= g.x + g.w);
             if (overGap && mario.y + mario.h >= 280) {
-                if (mario.y > 400) {
-                    mario.x = 40; mario.y = 240;
-                }
+                if (mario.y > 400) handlePlayerDeath();
             } else if (mario.y + mario.h >= 280) {
                 mario.y = 280 - mario.h;
                 mario.dy = 0;
                 mario.isGrounded = true;
             }
 
-            // Đứng trên ống cống
             pipes.forEach(p => {
                 if (mario.x + mario.w > p.x && mario.x < p.x + p.w && mario.y + mario.h >= p.y && mario.y + mario.h <= p.y + 12 && mario.dy >= 0) {
                     mario.y = p.y - mario.h;
@@ -367,28 +455,87 @@
                 }
             });
 
-            // Đập hộp ?
             blocks.forEach(b => {
                 if (mario.x < b.x + b.w && mario.x + mario.w > b.x && mario.y <= b.y + b.h && mario.y >= b.y && mario.dy < 0) {
                     mario.dy = 2;
                     if (!b.hit) {
                         b.hit = true;
-                        levelCoins++;
-                        playSound('coin');
+                        if (b.type === 'question') {
+                            if (b.content === 'coin') {
+                                levelCoins++;
+                                playSound('coin');
+                            } else {
+                                items.push({ x: b.x, y: b.y - 24, w: 24, h: 24, type: b.content, dy: -2, vx: 1.5 });
+                                playSound('powerup');
+                            }
+                        } else {
+                            playSound('kick');
+                        }
                     }
                 }
             });
 
+            items.forEach(it => {
+                it.x += it.vx;
+                it.y += it.dy;
+                if (it.y + it.h < 280) it.dy += 0.3;
+                else { it.y = 280 - it.h; it.dy = 0; }
+
+                if (mario.x < it.x + it.w && mario.x + mario.w > it.x && mario.y < it.y + it.h && mario.y + mario.h > it.y) {
+                    if (it.type === 'mushroom') {
+                        mario.state = 'super';
+                        mario.h = 48;
+                        mario.y -= 12;
+                    } else if (it.type === 'star') {
+                        mario.starTimer = 300;
+                        startBGM();
+                    }
+                    it.collected = true;
+                    playSound('powerup');
+                }
+            });
+            items = items.filter(it => !it.collected);
+
             enemies.forEach(e => {
                 if (!e.alive) return;
-                e.x += e.dir * 1.0;
-                if (e.x < 100 || e.x > worldWidth - 100) e.dir *= -1;
 
-                if (mario.x < e.x + e.w && mario.x + mario.w > e.x && mario.y + mario.h >= e.y && mario.y + mario.h <= e.y + 12 && mario.dy > 0) {
-                    e.alive = false;
-                    mario.dy = -8;
-                } else if (mario.x < e.x + e.w && mario.x + mario.w > e.x && mario.y + mario.h < e.y + e.h && mario.y + mario.h > e.y) {
-                    mario.x = 40; mario.y = 240;
+                if (e.state === 'walking') {
+                    e.x += e.dir * 1.0;
+                    if (e.x < 100 || e.x > worldWidth - 100) e.dir *= -1;
+                } else if (e.state === 'shell_moving') {
+                    e.x += e.shellSpeed;
+                    enemies.forEach(other => {
+                        if (other !== e && other.alive && e.x < other.x + other.w && e.x + e.w > other.x) {
+                            other.alive = false;
+                        }
+                    });
+                }
+
+                if (mario.x < e.x + e.w && mario.x + mario.w > e.x && mario.y < e.y + e.h && mario.y + mario.h > e.y) {
+                    if (mario.starTimer > 0) {
+                        e.alive = false;
+                    } else if (mario.y + mario.h <= e.y + 12 && mario.dy > 0) {
+                        mario.dy = -8;
+                        if (e.type === 'goomba') {
+                            e.alive = false;
+                        } else if (e.type === 'koopa') {
+                            if (e.state === 'walking') {
+                                e.state = 'shell_still';
+                            } else if (e.state === 'shell_still') {
+                                e.state = 'shell_moving';
+                                e.shellSpeed = mario.facing === 'right' ? 6 : -6;
+                                playSound('kick');
+                            }
+                        }
+                    } else {
+                        if (e.state === 'shell_still') {
+                            e.state = 'shell_moving';
+                            e.shellSpeed = mario.x < e.x ? 6 : -6;
+                            playSound('kick');
+                        } else {
+                            handlePlayerDeath();
+                        }
+                    }
                 }
             });
 
@@ -396,9 +543,7 @@
             if (cameraX < 0) cameraX = 0;
             if (cameraX > worldWidth - canvas.width) cameraX = worldWidth - canvas.width;
 
-            if (mario.x >= flagX) {
-                winGame();
-            }
+            if (mario.x >= flagX) winGame();
         }
 
         function winGame() {
@@ -411,112 +556,218 @@
             if (mode === 'easy') u.normalUnlocked = true;
             if (mode === 'normal') u.hardUnlocked = true;
 
-            localStorage.setItem("mario_fixmap_db", JSON.stringify(db));
+            localStorage.setItem("mario_hddetailed_db", JSON.stringify(db));
 
             document.getElementById("winCoinsEarned").innerText = `🪙 +${levelCoins} Xu kiếm được`;
             document.getElementById("winTotalCoins").innerText = `💰 Tổng xu tài khoản (${currentUser}): ${u.coins}`;
             document.getElementById("winScreen").style.display = "flex";
         }
 
+        // HÀM VẼ ĐỒ HỌA HD CHI TIẾT
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.save();
             ctx.translate(-cameraX, 0);
 
-            // 1. Mây
-            ctx.fillStyle = "#fff";
-            clouds.forEach(c => {
-                ctx.fillRect(c.x + 4, c.y, 36, 14);
-                ctx.fillRect(c.x, c.y + 4, 44, 8);
+            // 1. Núi đồi phía xa
+            mountains.forEach(m => {
+                ctx.fillStyle = "#00a800";
+                ctx.beginPath();
+                ctx.moveTo(m.x, 280);
+                ctx.lineTo(m.x + m.w / 2, 280 - m.h);
+                ctx.lineTo(m.x + m.w, 280);
+                ctx.fill();
+                ctx.fillStyle = "#008800";
+                ctx.beginPath();
+                ctx.moveTo(m.x + m.w / 2, 280 - m.h);
+                ctx.lineTo(m.x + m.w, 280);
+                ctx.lineTo(m.x + m.w / 2, 280);
+                ctx.fill();
             });
 
-            // 2. Mặt đất
-            ctx.fillStyle = "#c84c0c";
+            // 2. Mây tầng chi tiết
+            ctx.fillStyle = "#ffffff";
+            clouds.forEach(c => {
+                ctx.fillRect(c.x + 6, c.y, c.w - 12, 16);
+                ctx.fillRect(c.x, c.y + 4, c.w, 10);
+                ctx.fillStyle = "#e0e0e0";
+                ctx.fillRect(c.x + 4, c.y + 12, c.w - 8, 4);
+                ctx.fillStyle = "#ffffff";
+            });
+
+            // 3. Bụi cỏ chi tiết
+            bushes.forEach(b => {
+                ctx.fillStyle = "#00d800";
+                ctx.fillRect(b.x, 268, b.w, 12);
+                ctx.fillStyle = "#00a800";
+                ctx.fillRect(b.x + 4, 264, b.w - 8, 4);
+            });
+
+            // 4. Mặt đất HD với viền cỏ xanh và gạch caro nâu
             for (let x = 0; x < worldWidth; x += 24) {
                 let inGap = gaps.some(g => x >= g.x && x < g.x + g.w);
                 if (!inGap) {
+                    // Lớp đất nâu
+                    ctx.fillStyle = "#c84c0c";
                     ctx.fillRect(x, 280, 24, 80);
-                    ctx.strokeStyle = "#000";
+                    ctx.strokeStyle = "#000000";
                     ctx.lineWidth = 1;
                     ctx.strokeRect(x, 280, 24, 80);
+                    // Lớp mặt cỏ tươi sáng
+                    ctx.fillStyle = "#00d800";
+                    ctx.fillRect(x, 280, 24, 4);
                     ctx.fillStyle = "#fc9838";
-                    ctx.fillRect(x + 2, 282, 20, 3);
-                    ctx.fillStyle = "#c84c0c";
+                    ctx.fillRect(x + 2, 286, 20, 2);
                 }
             }
 
-            // 3. Hiệu ứng hạt bụi
+            // 5. Hiệu ứng hạt bụi
             ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-            dustParticles.forEach(p => {
-                ctx.fillRect(p.x, p.y, p.size, p.size);
-            });
+            dustParticles.forEach(p => ctx.fillRect(p.x, p.y, p.size, p.size));
 
-            // 4. Ống cống
+            // 6. Ống cống HD nổi khối 3D
             pipes.forEach(p => {
-                ctx.fillStyle = "#008800";
-                ctx.fillRect(p.x + p.w - 12, p.y, 12, p.h);
                 ctx.fillStyle = "#00a800";
-                ctx.fillRect(p.x, p.y, p.w - 12, p.h);
+                ctx.fillRect(p.x, p.y, p.w, p.h);
+                ctx.fillStyle = "#00d800"; // Vệt sáng kim loại
+                ctx.fillRect(p.x + 6, p.y, 8, p.h);
+                ctx.fillStyle = "#005800"; // Bóng tối
+                ctx.fillRect(p.x + p.w - 8, p.y, 8, p.h);
+
+                // Nắp ống cống
+                ctx.fillStyle = "#00a800";
+                ctx.fillRect(p.x - 4, p.y, p.w + 8, 14);
                 ctx.fillStyle = "#00d800";
-                ctx.fillRect(p.x - 3, p.y, p.w + 6, 12);
-                ctx.strokeStyle = "#000";
+                ctx.fillRect(p.x - 2, p.y, 8, 14);
+                ctx.fillStyle = "#005800";
+                ctx.fillRect(p.x + p.w - 4, p.y, 8, 14);
+
+                ctx.strokeStyle = "#000000";
                 ctx.lineWidth = 2;
                 ctx.strokeRect(p.x, p.y, p.w, p.h);
+                ctx.strokeRect(p.x - 4, p.y, p.w + 8, 14);
             });
 
-            // 5. Hộp ?
+            // 7. Khối hộp ? & Gạch đỏ HD
             blocks.forEach(b => {
-                ctx.fillStyle = b.hit ? "#808080" : "#fc9838";
-                ctx.fillRect(b.x, b.y, b.w, b.h);
-                ctx.strokeStyle = "#000";
-                ctx.lineWidth = 2;
-                ctx.strokeRect(b.x, b.y, b.w, b.h);
-                ctx.fillStyle = "#000";
-                ctx.font = "bold 14px monospace";
-                ctx.fillText(b.hit ? "" : "?", b.x + 7, b.y + 17);
+                if (b.type === 'question') {
+                    ctx.fillStyle = b.hit ? "#808080" : "#fc9838";
+                    ctx.fillRect(b.x, b.y, b.w, b.h);
+                    ctx.strokeStyle = "#000000";
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(b.x, b.y, b.w, b.h);
+
+                    if (!b.hit) {
+                        ctx.fillStyle = "#a82800"; // Đinh 4 góc
+                        ctx.fillRect(b.x + 2, b.y + 2, 2, 2);
+                        ctx.fillRect(b.x + 20, b.y + 2, 2, 2);
+                        ctx.fillRect(b.x + 2, b.y + 20, 2, 2);
+                        ctx.fillRect(b.x + 20, b.y + 20, 2, 2);
+
+                        ctx.fillStyle = "#000000";
+                        ctx.font = "bold 14px monospace";
+                        ctx.fillText("?", b.x + 7, b.y + 17);
+                    }
+                } else {
+                    ctx.fillStyle = b.hit ? "#808080" : "#c84c0c";
+                    ctx.fillRect(b.x, b.y, b.w, b.h);
+                    ctx.strokeStyle = "#000000";
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(b.x, b.y, b.w, b.h);
+                }
             });
 
-            // 6. Quái Goomba
+            // 8. Vật phẩm Nấm / Ngôi sao HD
+            items.forEach(it => {
+                if (it.type === 'mushroom') {
+                    ctx.fillStyle = "#e40058";
+                    ctx.fillRect(it.x, it.y, it.w, 14);
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillRect(it.x + 4, it.y + 3, 5, 5);
+                    ctx.fillRect(it.x + 15, it.y + 3, 5, 5);
+                    ctx.fillStyle = "#fc9838";
+                    ctx.fillRect(it.x + 4, it.y + 14, 16, 10);
+                } else {
+                    ctx.fillStyle = "#f8d800";
+                    ctx.fillRect(it.x + 2, it.y, 20, 24);
+                    ctx.fillStyle = "#000";
+                    ctx.fillRect(it.x + 6, it.y + 6, 3, 6);
+                    ctx.fillRect(it.x + 15, it.y + 6, 3, 6);
+                }
+            });
+
+            // 9. Kẻ địch Goomba & Koopa HD
             enemies.forEach(e => {
                 if (!e.alive) return;
-                ctx.fillStyle = "#a81000";
-                ctx.fillRect(e.x + 3, e.y, 18, 12);
-                ctx.fillRect(e.x, e.y + 6, 24, 10);
-                ctx.fillStyle = "#fff";
-                ctx.fillRect(e.x + 3, e.y + 6, 6, 6);
-                ctx.fillRect(e.x + 15, e.y + 6, 6, 6);
-                ctx.fillStyle = "#000";
-                ctx.fillRect(e.x + 2, e.y + 18, 8, 6);
-                ctx.fillRect(e.x + 14, e.y + 18, 8, 6);
+                if (e.type === 'goomba') {
+                    ctx.fillStyle = "#a81000";
+                    ctx.fillRect(e.x + 3, e.y, 18, 12);
+                    ctx.fillRect(e.x, e.y + 6, 24, 10);
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillRect(e.x + 3, e.y + 6, 5, 6);
+                    ctx.fillRect(e.x + 16, e.y + 6, 5, 6);
+                    ctx.fillStyle = "#000000";
+                    ctx.fillRect(e.x + 5, e.y + 8, 2, 4);
+                    ctx.fillRect(e.x + 17, e.y + 8, 2, 4);
+                    ctx.fillRect(e.x + 2, e.y + 18, 8, 6);
+                    ctx.fillRect(e.x + 14, e.y + 18, 8, 6);
+                } else if (e.type === 'koopa') {
+                    ctx.fillStyle = "#00a800";
+                    ctx.fillRect(e.x + 2, e.y + (e.state === 'walking' ? 0 : 8), 20, 16);
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillRect(e.x + 5, e.y + 12, 14, 8);
+                }
             });
 
-            // 7. Cột cờ
-            ctx.fillStyle = "#fff";
-            ctx.fillRect(flagX, 100, 6, 180);
+            // 10. Cột cờ & Lâu đài đích đến HD
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(flagX, 80, 6, 200);
             ctx.fillStyle = "#00d800";
-            ctx.fillRect(flagX + 6, 100, 24, 16);
+            ctx.beginPath();
+            ctx.arc(flagX + 3, 80, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillRect(flagX + 6, 90, 28, 18);
 
-            // 8. Mario HD
-            let mx = mario.x;
-            let my = mario.y;
-            ctx.fillStyle = "#e40058";
-            ctx.fillRect(mx + 3, my, 18, 7);
-            ctx.fillStyle = "#fc9838";
-            ctx.fillRect(mx + 4, my + 7, 16, 9);
-            ctx.fillStyle = "#68381c";
-            ctx.fillRect(mx + 12, my + 11, 8, 3);
-            ctx.fillStyle = "#e40058";
-            ctx.fillRect(mx + 3, my + 16, 18, 9);
-            ctx.fillStyle = "#0000d8";
-            ctx.fillRect(mx + 4, my + 25, 16, 11);
+            // Lâu đài gạch
+            ctx.fillStyle = "#c84c0c";
+            ctx.fillRect(flagX + 50, 180, 80, 100);
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(flagX + 75, 230, 30, 50); // Cửa lâu đài
+
+            // 11. Mario HD Chi tiết
+            if (!(mario.invulnerableTimer > 0 && Math.floor(Date.now() / 80) % 2 === 0)) {
+                let mx = mario.x;
+                let my = mario.y;
+
+                // Nón
+                ctx.fillStyle = (mario.starTimer > 0 && Math.floor(Date.now() / 50) % 2 === 0) ? "#f8d800" : "#e40058";
+                ctx.fillRect(mx + 3, my, 18, 7);
+                // Mặt & Mắt
+                ctx.fillStyle = "#fc9838";
+                ctx.fillRect(mx + 4, my + 7, 16, 9);
+                ctx.fillStyle = "#000";
+                ctx.fillRect(mx + (mario.facing === 'right' ? 14 : 6), my + 9, 3, 3);
+                // Râu
+                ctx.fillStyle = "#68381c";
+                ctx.fillRect(mx + (mario.facing === 'right' ? 10 : 4), my + 12, 10, 3);
+                // Áo đỏ
+                ctx.fillStyle = (mario.starTimer > 0) ? "#00d800" : "#e40058";
+                ctx.fillRect(mx + 3, my + 16, 18, 9);
+                // Quần yếm xanh
+                ctx.fillStyle = "#0000d8";
+                ctx.fillRect(mx + 4, my + 25, 16, mario.h - 25);
+            }
 
             ctx.restore();
 
+            // HUD
             if (isPlaying) {
                 ctx.fillStyle = "#fff";
                 ctx.font = "bold 14px monospace";
-                ctx.fillText(`COINS: ${levelCoins}`, 15, 25);
-                ctx.fillText(`MODE: ${mode.toUpperCase()}`, 500, 25);
+                let heartStr = "❤️".repeat(lives);
+                ctx.fillText(`MẠNG: ${heartStr}`, 15, 25);
+                ctx.fillText(`COINS: ${levelCoins}`, 200, 25);
+                ctx.fillText(`MODE: ${mode.toUpperCase()}`, 480, 25);
             }
         }
 
