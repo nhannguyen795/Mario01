@@ -3,20 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Super Mario Bros. Deluxe</title>
+    <title>Super Mario Bros. Deluxe Accounts</title>
     <style>
         * { box-sizing: border-box; touch-action: manipulation; user-select: none; }
         body { margin: 0; padding: 10px; background: #000; text-align: center; font-family: 'Courier New', Courier, monospace; color: #fff; }
         
-        .game-container { position: relative; width: 360px; margin: 0 auto; background: #5c94fc; border: 4px solid #fff; box-shadow: 0 0 15px rgba(255,255,255,0.4); }
+        .game-container { position: relative; width: 360px; margin: 0 auto; background: #5c94fc; border: 4px solid #fff; box-shadow: 0 0 15px rgba(255,255,255,0.4); overflow: hidden; }
         canvas { background: #5c94fc; display: block; margin: 0 auto; image-rendering: pixelated; image-rendering: crisp-edges; }
         
-        #menu { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #5c94fc; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; }
-        #menu h1 { font-size: 24px; color: #fff; text-shadow: 3px 3px #d80000; margin-bottom: 5px; }
-        #menu h3 { font-size: 13px; color: #fc9838; margin-bottom: 25px; }
-        .menu-btn { width: 200px; padding: 10px; margin: 6px; font-size: 14px; font-family: 'Courier New', Courier, monospace; font-weight: bold; background: #000; color: #fff; border: 2px solid #fff; border-radius: 4px; cursor: pointer; }
-        .menu-btn:disabled { color: #808080; border-color: #808080; cursor: not-allowed; }
-        .menu-btn:hover:not(:disabled) { background: #e40058; }
+        .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #5c94fc; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; }
+        .screen h1 { font-size: 22px; color: #fff; text-shadow: 3px 3px #d80000; margin-bottom: 5px; }
+        .screen h3 { font-size: 12px; color: #fc9838; margin-bottom: 15px; text-shadow: 1px 1px #000; }
+        
+        .input-group { margin: 5px 0; width: 80%; }
+        .input-group input { width: 100%; padding: 8px; font-family: 'Courier New'; font-weight: bold; text-align: center; border: 2px solid #000; border-radius: 4px; }
+        
+        .menu-btn { width: 200px; padding: 10px; margin: 6px; font-size: 13px; font-family: 'Courier New', Courier, monospace; font-weight: bold; background: #000; color: #fff; border: 2px solid #fff; border-radius: 4px; cursor: pointer; box-shadow: 0 4px 0 #333; }
+        .menu-btn:disabled { color: #808080; border-color: #808080; cursor: not-allowed; box-shadow: none; }
+        .menu-btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 #333; background: #e40058; }
+
+        #winOverlay { display: none; background: rgba(0, 0, 0, 0.9); border: 3px solid #f8d800; z-index: 150; }
+        #winOverlay h1 { color: #f8d800; text-shadow: 3px 3px #e75910; font-size: 24px; }
+        #winOverlay p { font-size: 13px; color: #fff; margin: 6px 0; }
 
         .controls { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 360px; margin: 15px auto 0 auto; }
         .d-pad { display: flex; gap: 10px; }
@@ -24,16 +32,42 @@
         .btn:active { transform: translateY(4px); box-shadow: 0 0 0 #000; background: #d4b800; }
         .btn-jump { width: 80px; background: #e75910; color: #fff; }
         .btn-jump:active { background: #b54007; }
+        
+        #userStatus { font-size: 11px; color: #f8d800; margin-bottom: 8px; }
     </style>
 </head>
 <body>
     <div class="game-container">
-        <div id="menu">
-            <h1>SUPER MARIO BROS.</h1>
-            <h3>CHỌN ĐỘ KHÓ</h3>
+        <!-- MÀN HÌNH ĐĂNG NHẬP / TẠO TÀI KHOẢN -->
+        <div id="authScreen" class="screen">
+            <h1>SUPER MARIO</h1>
+            <h3>HỆ THỐNG TÀI KHOẢN</h3>
+            <div id="userStatus">Chưa đăng nhập (0 Xu)</div>
+            <div class="input-group">
+                <input type="text" id="usernameInput" placeholder="Nhập tên tài khoản...">
+            </div>
+            <button class="menu-btn" onclick="loginUser()">ĐĂNG NHẬP / TẠO MỚI</button>
+            <button class="menu-btn" style="background:#808080;" onclick="logoutUser()" id="logoutBtn" disabled>ĐĂNG XUẤT</button>
+            <button class="menu-btn" style="background:#00a800;" onclick="goToMenu()" id="playMenuBtn" disabled>VÀO CHỌN MÀN ➔</button>
+        </div>
+
+        <!-- MÀN HÌNH CHỌN ĐỘ KHÓ -->
+        <div id="menuScreen" class="screen" style="display: none;">
+            <h1>CHỌN MÀN CHƠI</h1>
+            <h3 id="accountInfoDisplay">Tài khoản: Khách (0 Xu)</h3>
             <button class="menu-btn" onclick="initGame('easy')">1. EASY (Dễ)</button>
             <button id="btnNormal" class="menu-btn" onclick="initGame('normal')" disabled>2. MEDIUM (Khóa 🔒)</button>
             <button id="btnHard" class="menu-btn" onclick="initGame('hard')" disabled>3. HARD (Khóa 🔒)</button>
+            <button class="menu-btn" style="background:#e40058; margin-top:10px;" onclick="backToAuth()">⬅ ĐỔI TÀI KHOẢN</button>
+        </div>
+
+        <!-- THÔNG BÁO CHIẾN THẮNG (CỘNG XU VÀO TÀI KHOẢN) -->
+        <div id="winOverlay" class="screen">
+            <h1>STAGE CLEAR! 🚩</h1>
+            <h3 id="winTitle">HOÀN THÀNH XUẤT SẮC!</h3>
+            <p id="winStats">🪙 XU KIẾM ĐƯỢC: 0</p>
+            <p id="totalAccountCoins">💰 TỔNG XU TÀI KHOẢN: 0</p>
+            <button class="menu-btn" style="background: #00a800; border-color: #f8d800; margin-top: 15px;" onclick="returnToMenu()">TIẾP TỤC ➔</button>
         </div>
 
         <canvas id="game" width="360" height="200"></canvas>
@@ -54,6 +88,80 @@
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let bgmInterval = null;
 
+        // Quản lý tài khoản người dùng bằng localStorage
+        let currentUser = null;
+        let usersData = JSON.parse(localStorage.getItem("mario_users") || "{}");
+
+        function loginUser() {
+            let name = document.getElementById("usernameInput").value.trim();
+            if (!name) {
+                alert("Vui lòng nhập tên tài khoản!");
+                return;
+            }
+            if (!usersData[name]) {
+                // Tài khoản mới hoàn toàn không có 1 xu nào
+                usersData[name] = { coins: 0, unlockedNormal: false, unlockedHard: false };
+                localStorage.setItem("mario_users", JSON.stringify(usersData));
+            }
+            currentUser = name;
+            updateAuthUI();
+        }
+
+        function logoutUser() {
+            currentUser = null;
+            updateAuthUI();
+        }
+
+        function updateAuthUI() {
+            let statusDiv = document.getElementById("userStatus");
+            let logoutBtn = document.getElementById("logoutBtn");
+            let playBtn = document.getElementById("playMenuBtn");
+            let nameInput = document.getElementById("usernameInput");
+
+            if (currentUser) {
+                let uData = usersData[currentUser];
+                statusDiv.innerText = `Xin chào: ${currentUser} (${uData.coins} Xu)`;
+                logoutBtn.disabled = false;
+                playBtn.disabled = false;
+                nameInput.disabled = true;
+            } else {
+                statusDiv.innerText = "Chưa đăng nhập (0 Xu)";
+                logoutBtn.disabled = true;
+                playBtn.disabled = true;
+                nameInput.disabled = false;
+                nameInput.value = "";
+            }
+        }
+
+        function goToMenu() {
+            if (!currentUser) return;
+            document.getElementById("authScreen").style.display = "none";
+            document.getElementById("menuScreen").style.display = "flex";
+            
+            let uData = usersData[currentUser];
+            document.getElementById("accountInfoDisplay").innerText = `Tài khoản: ${currentUser} | 💰 ${uData.coins} Xu`;
+            
+            if (uData.unlockedNormal) {
+                document.getElementById("btnNormal").disabled = false;
+                document.getElementById("btnNormal").innerText = "2. MEDIUM (Mở khóa)";
+            }
+            if (uData.unlockedHard) {
+                document.getElementById("btnHard").disabled = false;
+                document.getElementById("btnHard").innerText = "3. HARD (Mở khóa)";
+            }
+        }
+
+        function backToAuth() {
+            document.getElementById("menuScreen").style.display = "none";
+            document.getElementById("authScreen").style.display = "flex";
+        }
+
+        function returnToMenu() {
+            document.getElementById("winOverlay").style.display = "none";
+            goToMenu();
+        }
+
+        // Âm thanh Web Audio API
         function startBGM() {
             if (audioCtx.state === 'suspended') { audioCtx.resume(); }
             if (bgmInterval) clearInterval(bgmInterval);
@@ -69,7 +177,7 @@
                 gain.connect(audioCtx.destination);
                 let startTime = audioCtx.currentTime;
                 osc.start(startTime);
-                gain.gain.setValueAtTime(0.04, startTime);
+                gain.gain.setValueAtTime(0.03, startTime);
                 gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.12);
                 osc.stop(startTime + 0.12);
                 step = (step + 1) % notes.length;
@@ -80,7 +188,6 @@
             if (bgmInterval) { clearInterval(bgmInterval); bgmInterval = null; }
         }
 
-        // Âm thanh nhảy chuẩn NES
         function playJumpSound() {
             if (audioCtx.state === 'suspended') { audioCtx.resume(); }
             let osc = audioCtx.createOscillator();
@@ -92,7 +199,7 @@
             osc.connect(gain);
             gain.connect(audioCtx.destination);
             osc.start(startTime);
-            gain.gain.setValueAtTime(0.08, startTime);
+            gain.gain.setValueAtTime(0.06, startTime);
             gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.12);
             osc.stop(startTime + 0.12);
         }
@@ -108,12 +215,11 @@
             osc.connect(gain);
             gain.connect(audioCtx.destination);
             osc.start(startTime);
-            gain.gain.setValueAtTime(0.08, startTime);
+            gain.gain.setValueAtTime(0.06, startTime);
             gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.25);
             osc.stop(startTime + 0.25);
         }
 
-        // Âm thanh ăn nấm chuẩn từ video bạn gửi (Power-Up Sound Effect)
         function playPowerUpSound() {
             if (audioCtx.state === 'suspended') { audioCtx.resume(); }
             let notes = [220, 277.18, 329.63, 440, 554.37, 659.25, 880];
@@ -127,9 +233,28 @@
                 gain.connect(audioCtx.destination);
                 let startTime = audioCtx.currentTime + (index * duration);
                 osc.start(startTime);
-                gain.gain.setValueAtTime(0.08, startTime);
+                gain.gain.setValueAtTime(0.06, startTime);
                 gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
                 osc.stop(startTime + duration);
+            });
+        }
+
+        function playWinSound() {
+            stopBGM();
+            if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+            let notes = [261, 329, 392, 523, 659, 783, 1046];
+            notes.forEach((freq, index) => {
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.type = "triangle";
+                osc.frequency.value = freq;
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                let startTime = audioCtx.currentTime + (index * 0.1);
+                osc.start(startTime);
+                gain.gain.setValueAtTime(0.1, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.2);
+                osc.stop(startTime + 0.2);
             });
         }
 
@@ -148,7 +273,7 @@
                 gain.connect(audioCtx.destination);
                 let startTime = audioCtx.currentTime + times[index];
                 osc.start(startTime);
-                gain.gain.setValueAtTime(0.08, startTime);
+                gain.gain.setValueAtTime(0.06, startTime);
                 gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
                 osc.stop(startTime + duration);
             });
@@ -156,8 +281,6 @@
 
         let gameStarted = false;
         let difficulty = "easy";
-        let unlockedMedium = false;
-        let unlockedHard = false;
 
         let mario = {
             x: 40, y: 130, w: 16, h: 24, dx: 0, dy: 0, speed: 2.5,
@@ -165,11 +288,11 @@
         };
 
         let score = 5400;
-        let coins = 22;
+        let levelCoinsEarned = 0; // Số xu kiếm được trong màn chơi hiện tại
         let worldTime = 400;
         let cameraX = 0;
         let keys = { left: false, right: false };
-        let worldWidth = 1000;
+        let worldWidth = 1200;
 
         let blocks = [];
         let pipes = [];
@@ -179,30 +302,48 @@
         let mushrooms = [];
         let clouds = [];
         let dustParticles = [];
-        let flagX = 900;
+        let gaps = [];
+        let flagX = 1100;
 
         let coinEffect = { x: 0, y: 0, dy: 0, active: false };
 
+        // Xóa sạch trạng thái phím khi chuyển màn để sửa lỗi tự động chạy
+        function resetKeys() {
+            keys.left = false;
+            keys.right = false;
+            mario.dx = 0;
+        }
+
         window.initGame = function(mode) {
+            resetKeys();
             difficulty = mode;
             gameStarted = true;
-            document.getElementById("menu").style.display = "none";
+            document.getElementById("menuScreen").style.display = "none";
+            document.getElementById("winOverlay").style.display = "none";
             worldTime = 400;
+            levelCoinsEarned = 0;
 
+            // Nhịp độ và thông số vật lý riêng cho từng màn
             if (mode === "easy") {
-                worldWidth = 1000;
-                mario.speed = 2.8;
+                worldWidth = 1200;
+                mario.speed = 2.4;
+                mario.gravity = 0.42;
+                mario.jumpPower = -8.2;
             } else if (mode === "normal") {
-                worldWidth = 1600;
-                mario.speed = 2.5;
+                worldWidth = 1800;
+                mario.speed = 2.7;
+                mario.gravity = 0.46;
+                mario.jumpPower = -8.5;
             } else if (mode === "hard") {
-                worldWidth = 2600;
-                mario.speed = 2.2;
-                mario.gravity = 0.5;
+                worldWidth = 2600; // Màn Hard dài và dồn dập
+                mario.speed = 3.1;
+                mario.gravity = 0.52; // Trọng lực nặng
+                mario.jumpPower = -8.8;
             }
 
             flagX = worldWidth - 150;
-            setupWorldObjects();
+            generateProceduralMap(mode);
+
             mario.x = 40;
             mario.y = 130;
             mario.big = false;
@@ -212,39 +353,70 @@
             startBGM();
         };
 
-        function setupWorldObjects() {
-            blocks = [
-                { x: 150, y: 100, w: 16, h: 16, type: "question", hit: false, hasMushroom: Math.random() < 0.15 },
-                { x: 166, y: 100, w: 16, h: 16, type: "brick" },
-                { x: 182, y: 100, w: 16, h: 16, type: "question", hit: false, hasMushroom: Math.random() < 0.15 }
-            ];
-            
-            pipes = [
-                { x: 380, y: 120, w: 32, h: 40 },
-                { x: 700, y: 110, w: 32, h: 50 }
-            ];
-
-            piranhas = [
-                { x: 388, y: 120, w: 16, h: 20, visible: false, timer: 0 },
-                { x: 708, y: 110, w: 16, h: 20, visible: false, timer: 60 }
-            ];
-
-            enemies = [
-                { x: 280, y: 144, w: 16, h: 16, dir: -1, alive: true },
-                { x: 550, y: 144, w: 16, h: 16, dir: 1, alive: true }
-            ];
-
-            // Bậc thang ở khúc cuối (Stairs) được thiết lập kỹ để Mario đứng lên được
-            stairs = [{ x: flagX - 120, base: 160, steps: 5 }];
+        // HỆ THỐNG RANDOM MAP NGẪU NHIÊN NHƯNG GIỮ NGUYÊN ĐẶC TRÙNG ĐỘ KHÓ
+        function generateProceduralMap(mode) {
+            blocks = [];
+            pipes = [];
+            piranhas = [];
+            enemies = [];
+            stairs = [];
             mushrooms = [];
-            
-            clouds = [
-                { x: 60, y: 35 }, { x: 280, y: 25 }, { x: 550, y: 40 }, 
-                { x: 950, y: 30 }, { x: 1400, y: 35 }
-            ];
+            gaps = [];
+            clouds = [];
 
-            if (difficulty !== "easy") {
-                blocks.push({ x: 850, y: 90, w: 16, h: 16, type: "question", hit: false, hasMushroom: Math.random() < 0.15 });
+            let numPipes = mode === "easy" ? 2 : (mode === "normal" ? 4 : 7);
+            let currentX = 250;
+
+            // Random các ống cống và chướng ngại vật dọc đường
+            for (let i = 0; i < numPipes; i++) {
+                currentX += Math.floor(Math.random() * 180) + 180;
+                if (currentX > flagX - 200) break;
+
+                let pHeight = mode === "hard" ? (Math.random() > 0.5 ? 50 : 70) : 40;
+                pipes.push({ x: currentX, y: 160 - pHeight, w: 32, h: pHeight });
+
+                // Cây ăn thịt xuất hiện nhiều hơn ở chế độ khó
+                if (mode !== "easy" || Math.random() > 0.4) {
+                    piranhas.push({ x: currentX + 8, y: 160 - pHeight, w: 16, h: 20, visible: false, timer: i * 30 });
+                }
+
+                // Hộp hỏi chấm (Question block) ngẫu nhiên
+                if (Math.random() > 0.3) {
+                    blocks.push({
+                        x: currentX - 20,
+                        y: 100 - (Math.random() > 0.5 ? 20 : 0),
+                        w: 16, h: 16,
+                        type: "question",
+                        hit: false,
+                        hasMushroom: Math.random() < 0.25
+                    });
+                }
+
+                // Kẻ địch Goomba tuần tra
+                enemies.push({
+                    x: currentX + 60,
+                    y: 144,
+                    w: 16, h: 16,
+                    dir: Math.random() > 0.5 ? 1 : -1,
+                    alive: true
+                });
+            }
+
+            // Thêm hố vực thẫm (Gaps) nếu là chế độ Hard
+            if (mode === "hard") {
+                gaps.push({ x: 950, w: 45 });
+                gaps.push({ x: 1750, w: 55 });
+            } else if (mode === "normal") {
+                gaps.push({ x: 1100, w: 40 });
+            }
+
+            // Bậc thang leo ở khúc cuối trước cột cờ
+            let stepCount = mode === "hard" ? 7 : (mode === "normal" ? 6 : 5);
+            stairs.push({ x: flagX - (stepCount * 16) - 30, base: 160, steps: stepCount });
+
+            // Mây trên trời
+            for (let cx = 50; cx < worldWidth; cx += 250) {
+                clouds.push({ x: cx + Math.random() * 50, y: 20 + Math.random() * 30 });
             }
         }
 
@@ -264,32 +436,25 @@
         function drawGround() {
             const groundY = 160;
             ctx.fillStyle = "#c84c0c";
-            ctx.fillRect(0, groundY, worldWidth, 40);
 
-            ctx.strokeStyle = "#000";
-            ctx.lineWidth = 1;
             for (let x = 0; x < worldWidth; x += 16) {
-                for (let y = groundY; y < canvas.height; y += 10) {
-                    ctx.strokeRect(x, y, 16, 10);
-                    ctx.fillStyle = "#fc9838";
-                    ctx.fillRect(x + 2, y + 2, 12, 2);
-                    ctx.fillStyle = "#a82800";
-                    ctx.fillRect(x + 2, y + 8, 12, 1);
+                let inGap = gaps.some(g => x >= g.x && x < g.x + g.w);
+                if (!inGap) {
+                    ctx.fillRect(x, groundY, 16, 40);
+                    ctx.strokeStyle = "#000";
+                    ctx.lineWidth = 1;
+                    for (let y = groundY; y < canvas.height; y += 10) {
+                        ctx.strokeRect(x, y, 16, 10);
+                        ctx.fillStyle = "#fc9838";
+                        ctx.fillRect(x + 2, y + 2, 12, 2);
+                        ctx.fillStyle = "#a82800";
+                        ctx.fillRect(x + 2, y + 8, 12, 1);
+                    }
+                    ctx.fillStyle = "#c84c0c";
                 }
             }
 
-            ctx.fillStyle = "#00a800";
-            [120, 480, 1020, 1700].forEach(gx => {
-                if (gx < worldWidth) {
-                    ctx.fillRect(gx, groundY - 12, 32, 12);
-                    ctx.fillStyle = "#00d800";
-                    ctx.fillRect(gx + 6, groundY - 16, 20, 4);
-                    ctx.fillStyle = "#006800";
-                    ctx.fillRect(gx, groundY - 2, 32, 2);
-                    ctx.fillStyle = "#00a800";
-                }
-            });
-
+            // Cờ đích & Lâu đài cuối màn
             ctx.fillStyle = "#fff";
             ctx.fillRect(flagX, 70, 3, 90);
             ctx.fillStyle = "#00d800";
@@ -403,15 +568,7 @@
 
         function drawBlocks() {
             blocks.forEach(b => {
-                if (b.type === "brick") {
-                    ctx.fillStyle = "#c84c0c";
-                    ctx.fillRect(b.x, b.y, b.w, b.h);
-                    ctx.strokeStyle = "#000";
-                    ctx.strokeRect(b.x, b.y, b.w, b.h);
-                    ctx.fillStyle = "#a82800";
-                    ctx.fillRect(b.x + 2, b.y + 2, 5, 5);
-                    ctx.fillRect(b.x + 9, b.y + 9, 5, 5);
-                } else if (b.type === "question") {
+                if (b.type === "question") {
                     ctx.fillStyle = b.hit ? "#808080" : "#fc9838";
                     ctx.fillRect(b.x, b.y, b.w, b.h);
                     ctx.strokeStyle = "#000";
@@ -431,14 +588,11 @@
                 ctx.fillRect(p.x, p.y, p.w - 8, p.h);
                 ctx.fillStyle = "#00d800";
                 ctx.fillRect(p.x - 2, p.y, p.w + 4, 8);
-                ctx.fillStyle = "#006800";
-                ctx.fillRect(p.x + p.w - 4, p.y, 2, 8);
                 ctx.strokeStyle = "#000";
                 ctx.strokeRect(p.x, p.y, p.w, p.h);
             });
         }
 
-        // Vẽ bậc thang chi tiết và chuẩn xác
         function drawStairs() {
             stairs.forEach(s => {
                 for (let i = 0; i < s.steps; i++) {
@@ -465,6 +619,7 @@
 
             ctx.fillText(String(score).padStart(6, '0'), 25, 30);
             
+            // Biểu tượng xu trong màn chơi
             ctx.fillStyle = "#f8d800";
             ctx.fillRect(84, 21, 8, 9);
             ctx.fillStyle = "#fcb800";
@@ -475,7 +630,7 @@
             ctx.fillRect(90, 22, 1, 7);
 
             ctx.fillStyle = "#fff";
-            ctx.fillText("x" + String(coins).padStart(2, '0'), 98, 30);
+            ctx.fillText("x" + String(levelCoinsEarned).padStart(2, '0'), 98, 30);
             ctx.fillText("1-1", 170, 30);
             ctx.fillText(String(Math.max(0, Math.floor(worldTime))), 285, 30);
 
@@ -485,6 +640,31 @@
                 ctx.arc(coinEffect.x, coinEffect.y, 4, 0, Math.PI * 2);
                 ctx.fill();
             }
+        }
+
+        function triggerWin() {
+            playWinSound();
+            gameStarted = false;
+
+            // Cập nhật mở khóa màn chơi và cộng dồn xu vào tài khoản người dùng
+            let uData = usersData[currentUser];
+            uData.coins += levelCoinsEarned;
+
+            if (difficulty === "easy") {
+                uData.unlockedNormal = true;
+                document.getElementById("btnNormal").disabled = false;
+                document.getElementById("btnNormal").innerText = "2. MEDIUM (Mở khóa)";
+            } else if (difficulty === "normal") {
+                uData.unlockedHard = true;
+                document.getElementById("btnHard").disabled = false;
+                document.getElementById("btnHard").innerText = "3. HARD (Mở khóa)";
+            }
+            localStorage.setItem("mario_users", JSON.stringify(usersData));
+
+            document.getElementById("winTitle").innerText = `CHIẾN THẮNG MÀN ${difficulty.toUpperCase()}!`;
+            document.getElementById("winStats").innerText = `🪙 XU KIẾM ĐƯỢC: +${levelCoinsEarned}`;
+            document.getElementById("totalAccountCoins").innerText = `💰 TỔNG XU TÀI KHOẢN (${currentUser}): ${uData.coins}`;
+            document.getElementById("winOverlay").style.display = "flex";
         }
 
         function update() {
@@ -524,19 +704,7 @@
             });
 
             if (mario.x >= flagX) {
-                stopBGM();
-                alert("CHIẾN THẮNG MÀN " + difficulty.toUpperCase() + "!");
-                if (difficulty === "easy") {
-                    unlockedMedium = true;
-                    document.getElementById("btnNormal").disabled = false;
-                    document.getElementById("btnNormal").innerText = "2. MEDIUM (Mở khóa)";
-                } else if (difficulty === "normal") {
-                    unlockedHard = true;
-                    document.getElementById("btnHard").disabled = false;
-                    document.getElementById("btnHard").innerText = "3. HARD (Mở khóa)";
-                }
-                gameStarted = false;
-                document.getElementById("menu").style.display = "flex";
+                triggerWin();
                 return;
             }
 
@@ -548,14 +716,17 @@
             mario.y += mario.dy;
             mario.isGrounded = false;
 
-            // Va chạm mặt đất
-            if (mario.y + mario.h >= 160) {
+            let overGap = gaps.some(g => mario.x + mario.w / 2 >= g.x && mario.x + mario.w / 2 <= g.x + g.w);
+            if (overGap && mario.y + mario.h >= 160) {
+                if (mario.y > 220) {
+                    handleMarioHit(true);
+                }
+            } else if (mario.y + mario.h >= 160) {
                 mario.y = 160 - mario.h;
                 mario.dy = 0;
                 mario.isGrounded = true;
             }
 
-            // Va chạm ống cống (đứng trên)
             pipes.forEach(p => {
                 if (mario.x + mario.w > p.x && mario.x < p.x + p.w &&
                     mario.y + mario.h >= p.y && mario.y + mario.h <= p.y + 12 && mario.dy >= 0) {
@@ -565,7 +736,6 @@
                 }
             });
 
-            // Va chạm chuẩn xác với các bậc thang ở cuối để Mario đứng vững
             stairs.forEach(s => {
                 for (let i = 0; i < s.steps; i++) {
                     for (let j = 0; j <= i; j++) {
@@ -607,7 +777,7 @@
                         if (b.hasMushroom) {
                             mushrooms.push({ x: b.x, y: b.y - 16, dir: 1, dy: -3 });
                         } else {
-                            coins += 1;
+                            levelCoinsEarned += 1; // Kiếm xu trong lúc chơi
                             score += 200;
                             coinEffect = { x: b.x + 8, y: b.y - 5, dy: -3, active: true };
                             playCoinSound();
@@ -641,7 +811,7 @@
             enemies.forEach(e => {
                 if (!e.alive) return;
                 e.x += e.dir * 0.6;
-                if (e.x <= 100 || e.x >= worldWidth - 100) e.dir *= -1;
+                if (e.x <= 50 || e.x >= worldWidth - 50) e.dir *= -1;
 
                 if (mario.x < e.x + e.w && mario.x + mario.w > e.x &&
                     mario.y + mario.h >= e.y && mario.y + mario.h <= e.y + 8 && mario.dy > 0) {
@@ -654,13 +824,13 @@
             });
         }
 
-        function handleMarioHit() {
-            if (mario.big) {
+        function handleMarioHit(instantDeath = false) {
+            if (mario.big && !instantDeath) {
                 mario.big = false;
                 mario.h = 24;
                 mario.invincible = true;
                 setTimeout(() => { mario.invincible = false; }, 1500);
-            } else if (!mario.invincible) {
+            } else if (!mario.invincible || instantDeath) {
                 playGameOverSound();
                 mario.x = 40; 
                 mario.y = 130; 
@@ -693,6 +863,7 @@
             requestAnimationFrame(gameLoop);
         }
 
+        // Đảm bảo bắt sự kiện phím mượt mà và không bị kẹt khi đổi màn
         window.addEventListener("keydown", e => {
             if (e.key === "ArrowLeft" || e.key === "a") keys.left = true;
             if (e.key === "ArrowRight" || e.key === "d") keys.right = true;
