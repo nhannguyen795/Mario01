@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Super Mario Bros Deluxe - Ultimate Edition</title>
+    <title>Super Mario Bros Deluxe - Fixed Map</title>
     <style>
         * { box-sizing: border-box; touch-action: manipulation; user-select: none; }
         body { margin: 0; padding: 5px; background: #000; text-align: center; font-family: 'Courier New', Courier, monospace; color: #fff; }
@@ -49,7 +49,6 @@
         .btn-ui:disabled { background: #555; color: #aaa; border-color: #888; cursor: not-allowed; box-shadow: none; }
         .btn-ui:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 #222; background: #e40058; }
 
-        /* Nút điều khiển cảm ứng điện thoại tối ưu to rõ */
         .touch-controls {
             display: flex;
             justify-content: space-between;
@@ -118,7 +117,7 @@
         const ctx = canvas.getContext("2d");
 
         let currentUser = null;
-        let db = JSON.parse(localStorage.getItem("mario_ultimate_db") || "{}");
+        let db = JSON.parse(localStorage.getItem("mario_fixmap_db") || "{}");
 
         function handleLogin() {
             let name = document.getElementById("userInput").value.trim();
@@ -126,7 +125,7 @@
             
             if (!db[name]) {
                 db[name] = { coins: 0, normalUnlocked: false, hardUnlocked: false };
-                localStorage.setItem("mario_ultimate_db", JSON.stringify(db));
+                localStorage.setItem("mario_fixmap_db", JSON.stringify(db));
             }
             currentUser = name;
             showMenu();
@@ -225,7 +224,7 @@
         let worldWidth = 1600;
         let cameraX = 0;
 
-        let mario = { x: 40, y: 240, w: 24, h: 36, dx: 0, dy: 0, speed: 4, gravity: 0.6, isGrounded: false };
+        let mario = { x: 40, y: 240, w: 24, h: 36, dx: 0, dy: 0, speed: 4, gravity: 0.6, isGrounded: false, facing: 'right' };
         let keys = { left: false, right: false };
 
         let pipes = [];
@@ -233,16 +232,22 @@
         let enemies = [];
         let gaps = [];
         let clouds = [];
+        let dustParticles = [];
         let flagX = 1450;
 
+        function resetKeys() {
+            keys.left = false;
+            keys.right = false;
+            mario.dx = 0;
+        }
+
         function startGame(selectedMode) {
+            resetKeys();
             mode = selectedMode;
             isPlaying = true;
             levelCoins = 0;
             cameraX = 0;
-            
-            keys.left = false;
-            keys.right = false;
+            dustParticles = [];
 
             document.getElementById("menuScreen").style.display = "none";
 
@@ -260,26 +265,36 @@
             startBGM();
         }
 
+        // TẠO BẢN ĐỒ AN TOÀN - KHÔNG BỊ KẸT LỖI XUẤT PHÁT
         function generateMap() {
             pipes = []; blocks = []; enemies = []; gaps = []; clouds = [];
             let pipeCount = mode === 'easy' ? 4 : (mode === 'normal' ? 6 : 10);
 
+            // Bắt đầu đặt ống cống từ x = 450 để khoảng xuất phát của Mario trống trải hoàn toàn
+            let currentX = 450; 
+
             for (let i = 0; i < pipeCount; i++) {
-                let px = 300 + i * 260 + Math.random() * 60;
-                if (px > flagX - 150) break;
+                if (currentX > flagX - 250) break;
 
-                let ph = (mode === 'hard' && Math.random() > 0.5) ? 90 : 60;
-                pipes.push({ x: px, y: 280 - ph, w: 48, h: ph });
+                let ph = (mode === 'hard' && Math.random() > 0.5) ? 80 : 50;
+                pipes.push({ x: currentX, y: 280 - ph, w: 48, h: ph });
 
-                blocks.push({ x: px - 45, y: 170, w: 24, h: 24, hit: false });
-                enemies.push({ x: px + 80, y: 256, w: 24, h: 24, dir: -1, alive: true });
+                // Hộp xu ?
+                blocks.push({ x: currentX - 50, y: 170, w: 24, h: 24, hit: false });
+
+                // Kẻ địch Goomba
+                enemies.push({ x: currentX + 90, y: 256, w: 24, h: 24, dir: -1, alive: true });
+
+                // Khoảng cách an toàn giữa các ống cống
+                currentX += Math.floor(Math.random() * 150) + 260; 
             }
 
+            // Đặt hố vực xa vùng xuất phát
             if (mode === 'hard') {
-                gaps.push({ x: 1200, w: 70 });
-                gaps.push({ x: 2200, w: 80 });
+                gaps.push({ x: 1300, w: 70 });
+                gaps.push({ x: 2300, w: 80 });
             } else if (mode === 'normal') {
-                gaps.push({ x: 1400, w: 60 });
+                gaps.push({ x: 1500, w: 60 });
             }
 
             for (let cx = 50; cx < worldWidth; cx += 200) {
@@ -291,13 +306,35 @@
             if (!isPlaying) return;
 
             mario.dx = 0;
-            if (keys.left) mario.dx = -mario.speed;
-            if (keys.right) mario.dx = mario.speed;
+            if (keys.left) {
+                mario.dx = -mario.speed;
+                mario.facing = 'left';
+            }
+            if (keys.right) {
+                mario.dx = mario.speed;
+                mario.facing = 'right';
+            }
 
             mario.x += mario.dx;
             if (mario.x < 0) mario.x = 0;
 
-            // Va chạm ống cống
+            // Hạt bụi khi di chuyển
+            if (mario.isGrounded && mario.dx !== 0 && Math.random() < 0.5) {
+                dustParticles.push({
+                    x: mario.x + (mario.facing === 'right' ? 2 : mario.w - 4),
+                    y: mario.y + mario.h - 4,
+                    size: Math.random() * 3 + 2,
+                    life: 12
+                });
+            }
+
+            dustParticles.forEach(p => {
+                p.life--;
+                p.y -= 0.3;
+            });
+            dustParticles = dustParticles.filter(p => p.life > 0);
+
+            // Va chạm ống cống ngang
             pipes.forEach(p => {
                 if (mario.x < p.x + p.w && mario.x + mario.w > p.x && mario.y + mario.h > p.y) {
                     if (mario.dx > 0) mario.x = p.x - mario.w;
@@ -321,6 +358,7 @@
                 mario.isGrounded = true;
             }
 
+            // Đứng trên ống cống
             pipes.forEach(p => {
                 if (mario.x + mario.w > p.x && mario.x < p.x + p.w && mario.y + mario.h >= p.y && mario.y + mario.h <= p.y + 12 && mario.dy >= 0) {
                     mario.y = p.y - mario.h;
@@ -373,7 +411,7 @@
             if (mode === 'easy') u.normalUnlocked = true;
             if (mode === 'normal') u.hardUnlocked = true;
 
-            localStorage.setItem("mario_ultimate_db", JSON.stringify(db));
+            localStorage.setItem("mario_fixmap_db", JSON.stringify(db));
 
             document.getElementById("winCoinsEarned").innerText = `🪙 +${levelCoins} Xu kiếm được`;
             document.getElementById("winTotalCoins").innerText = `💰 Tổng xu tài khoản (${currentUser}): ${u.coins}`;
@@ -407,7 +445,13 @@
                 }
             }
 
-            // 3. Ống cống
+            // 3. Hiệu ứng hạt bụi
+            ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+            dustParticles.forEach(p => {
+                ctx.fillRect(p.x, p.y, p.size, p.size);
+            });
+
+            // 4. Ống cống
             pipes.forEach(p => {
                 ctx.fillStyle = "#008800";
                 ctx.fillRect(p.x + p.w - 12, p.y, 12, p.h);
@@ -420,7 +464,7 @@
                 ctx.strokeRect(p.x, p.y, p.w, p.h);
             });
 
-            // 4. Hộp ?
+            // 5. Hộp ?
             blocks.forEach(b => {
                 ctx.fillStyle = b.hit ? "#808080" : "#fc9838";
                 ctx.fillRect(b.x, b.y, b.w, b.h);
@@ -432,7 +476,7 @@
                 ctx.fillText(b.hit ? "" : "?", b.x + 7, b.y + 17);
             });
 
-            // 5. Quái Goomba
+            // 6. Quái Goomba
             enemies.forEach(e => {
                 if (!e.alive) return;
                 ctx.fillStyle = "#a81000";
@@ -446,13 +490,13 @@
                 ctx.fillRect(e.x + 14, e.y + 18, 8, 6);
             });
 
-            // 6. Cột cờ
+            // 7. Cột cờ
             ctx.fillStyle = "#fff";
             ctx.fillRect(flagX, 100, 6, 180);
             ctx.fillStyle = "#00d800";
             ctx.fillRect(flagX + 6, 100, 24, 16);
 
-            // 7. Mario HD
+            // 8. Mario HD
             let mx = mario.x;
             let my = mario.y;
             ctx.fillStyle = "#e40058";
