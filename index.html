@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Super Mario Bros Classic HD</title>
+    <title>Super Mario Bros Deluxe - Ultimate Edition</title>
     <style>
         * { box-sizing: border-box; touch-action: manipulation; user-select: none; }
-        body { margin: 0; padding: 10px; background: #050505; text-align: center; font-family: 'Courier New', Courier, monospace; color: #fff; }
+        body { margin: 0; padding: 5px; background: #000; text-align: center; font-family: 'Courier New', Courier, monospace; color: #fff; }
         
         .game-wrapper {
             position: relative;
             width: 100%;
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             background: #5c94fc;
             border: 4px solid #fff;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(255,255,255,0.3);
+            border-radius: 6px;
+            box-shadow: 0 0 15px rgba(255,255,255,0.4);
             overflow: hidden;
         }
 
@@ -40,32 +40,32 @@
             align-items: center;
             z-index: 10;
         }
-        .overlay h1 { margin: 0 0 10px 0; color: #fff; text-shadow: 3px 3px #d80000; font-size: clamp(20px, 5vw, 32px); }
-        .overlay h3 { margin: 5px 0 15px 0; font-size: clamp(12px, 3vw, 16px); color: #f8d800; text-shadow: 1px 1px #000; }
+        .overlay h1 { margin: 0 0 8px 0; color: #fff; text-shadow: 3px 3px #d80000; font-size: clamp(22px, 5vw, 34px); }
+        .overlay h3 { margin: 4px 0 12px 0; font-size: clamp(12px, 3vw, 16px); color: #f8d800; text-shadow: 1px 1px #000; }
         
-        input[type="text"] { width: 80%; max-width: 300px; padding: 10px; font-size: 14px; font-family: inherit; font-weight: bold; text-align: center; border: 2px solid #000; border-radius: 4px; margin-bottom: 10px; }
+        input[type="text"] { width: 80%; max-width: 280px; padding: 10px; font-size: 15px; font-family: inherit; font-weight: bold; text-align: center; border: 2px solid #000; border-radius: 4px; margin-bottom: 10px; }
         
-        .btn-ui { width: 80%; max-width: 300px; padding: 10px; margin: 4px 0; font-size: 14px; font-family: inherit; font-weight: bold; background: #000; color: #fff; border: 2px solid #fff; border-radius: 4px; cursor: pointer; box-shadow: 0 4px 0 #222; }
+        .btn-ui { width: 80%; max-width: 280px; padding: 10px; margin: 4px 0; font-size: 14px; font-family: inherit; font-weight: bold; background: #000; color: #fff; border: 2px solid #fff; border-radius: 4px; cursor: pointer; box-shadow: 0 4px 0 #222; }
         .btn-ui:disabled { background: #555; color: #aaa; border-color: #888; cursor: not-allowed; box-shadow: none; }
         .btn-ui:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 #222; background: #e40058; }
 
-        /* Điều khiển cảm ứng điện thoại */
+        /* Nút điều khiển cảm ứng điện thoại tối ưu to rõ */
         .touch-controls {
             display: flex;
             justify-content: space-between;
             align-items: center;
             width: 100%;
-            max-width: 800px;
-            margin: 10px auto 0 auto;
+            max-width: 900px;
+            margin: 8px auto 0 auto;
             padding: 0 5px;
         }
-        .d-pad { display: flex; gap: 10px; }
-        .btn-ctrl { width: 65px; height: 50px; background: #f8d800; color: #000; border: 3px solid #000; font-weight: bold; font-size: 20px; border-radius: 10px; box-shadow: 0 4px 0 #000; cursor: pointer; }
-        .btn-ctrl:active { transform: translateY(3px); box-shadow: none; background: #d4b800; }
-        .btn-jump { width: 85px; background: #e75910; color: #fff; }
+        .d-pad { display: flex; gap: 12px; }
+        .btn-ctrl { width: 75px; height: 60px; background: #f8d800; color: #000; border: 3px solid #000; font-weight: bold; font-size: 22px; border-radius: 12px; box-shadow: 0 4px 0 #000; cursor: pointer; }
+        .btn-ctrl:active { transform: translateY(4px); box-shadow: none; background: #d4b800; }
+        .btn-jump { width: 100px; background: #e75910; color: #fff; }
 
-        .pc-guide { margin-top: 10px; font-size: 12px; color: #aaa; }
-        .pc-guide span { color: #f8d800; }
+        .pc-guide { margin-top: 8px; font-size: 13px; color: #ccc; }
+        .pc-guide span { color: #f8d800; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -86,7 +86,7 @@
             <button class="btn-ui" onclick="startGame('easy')">1. EASY (Dễ)</button>
             <button class="btn-ui" id="btnNormal" onclick="startGame('normal')" disabled>2. MEDIUM (Khóa 🔒)</button>
             <button class="btn-ui" id="btnHard" onclick="startGame('hard')" disabled>3. HARD (Khóa 🔒)</button>
-            <button class="btn-ui" style="background:#d80000; margin-top:5px;" onclick="logout()">⬅ ĐỔI TÀI KHOẢN</button>
+            <button class="btn-ui" style="background:#d80000; margin-top:6px;" onclick="logout()">⬅ ĐỔI TÀI KHOẢN</button>
         </div>
 
         <!-- 3. MÀN HÌNH CHIẾN THẮNG -->
@@ -100,7 +100,7 @@
         <canvas id="canvas" width="640" height="360"></canvas>
     </div>
 
-    <!-- CỤM NÚT CẢM ỨNG ĐIỆN THOẠI -->
+    <!-- NÚT ĐIỀU KHIỂN ĐIỆN THOẠI -->
     <div class="touch-controls">
         <div class="d-pad">
             <button class="btn-ctrl" id="btnLeft">◄</button>
@@ -118,15 +118,15 @@
         const ctx = canvas.getContext("2d");
 
         let currentUser = null;
-        let db = JSON.parse(localStorage.getItem("mario_responsive_db") || "{}");
+        let db = JSON.parse(localStorage.getItem("mario_ultimate_db") || "{}");
 
         function handleLogin() {
             let name = document.getElementById("userInput").value.trim();
-            if (!name) return alert("Vui lòng nhập tên!");
+            if (!name) return alert("Vui lòng nhập tên tài khoản!");
             
             if (!db[name]) {
                 db[name] = { coins: 0, normalUnlocked: false, hardUnlocked: false };
-                localStorage.setItem("mario_responsive_db", JSON.stringify(db));
+                localStorage.setItem("mario_ultimate_db", JSON.stringify(db));
             }
             currentUser = name;
             showMenu();
@@ -156,8 +156,36 @@
             else { bHard.disabled = true; bHard.innerText = "3. HARD (Khóa 🔒)"; }
         }
 
-        // Âm thanh
+        // Âm thanh Web Audio API đầy đủ
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let bgmInterval = null;
+
+        function startBGM() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (bgmInterval) clearInterval(bgmInterval);
+            let notes = [523.25, 587.33, 659.25, 523.25, 659.25, 783.99, 659.25, 523.25];
+            let step = 0;
+            bgmInterval = setInterval(() => {
+                if (!isPlaying) return;
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.type = "square";
+                osc.frequency.value = notes[step];
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                let now = audioCtx.currentTime;
+                osc.start(now);
+                gain.gain.setValueAtTime(0.04, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                osc.stop(now + 0.12);
+                step = (step + 1) % notes.length;
+            }, 140);
+        }
+
+        function stopBGM() {
+            if (bgmInterval) { clearInterval(bgmInterval); bgmInterval = null; }
+        }
+
         function playSound(type) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             let osc = audioCtx.createOscillator();
@@ -170,21 +198,22 @@
                 osc.type = 'square';
                 osc.frequency.setValueAtTime(180, now);
                 osc.frequency.exponentialRampToValueAtTime(650, now + 0.12);
-                gain.gain.setValueAtTime(0.06, now);
+                gain.gain.setValueAtTime(0.08, now);
                 gain.gain.linearRampToValueAtTime(0, now + 0.12);
                 osc.start(now); osc.stop(now + 0.12);
             } else if (type === 'coin') {
                 osc.type = 'square';
                 osc.frequency.setValueAtTime(987, now);
                 osc.frequency.setValueAtTime(1318, now + 0.08);
-                gain.gain.setValueAtTime(0.06, now);
+                gain.gain.setValueAtTime(0.08, now);
                 gain.gain.linearRampToValueAtTime(0, now + 0.2);
                 osc.start(now); osc.stop(now + 0.2);
             } else if (type === 'win') {
+                stopBGM();
                 osc.type = 'triangle';
                 osc.frequency.setValueAtTime(440, now);
                 osc.frequency.setValueAtTime(880, now + 0.15);
-                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.setValueAtTime(0.12, now);
                 gain.gain.linearRampToValueAtTime(0, now + 0.4);
                 osc.start(now); osc.stop(now + 0.4);
             }
@@ -228,6 +257,7 @@
             mario.dy = 0;
 
             generateMap();
+            startBGM();
         }
 
         function generateMap() {
@@ -275,12 +305,11 @@
                 }
             });
 
-            // Trọng lực & Nhảy
             mario.dy += mario.gravity;
             mario.y += mario.dy;
             mario.isGrounded = false;
 
-            // Kiểm tra rớt hố
+            // Rơi hố
             let overGap = gaps.some(g => mario.x + 12 >= g.x && mario.x + 12 <= g.x + g.w);
             if (overGap && mario.y + mario.h >= 280) {
                 if (mario.y > 400) {
@@ -292,7 +321,6 @@
                 mario.isGrounded = true;
             }
 
-            // Đứng trên ống cống
             pipes.forEach(p => {
                 if (mario.x + mario.w > p.x && mario.x < p.x + p.w && mario.y + mario.h >= p.y && mario.y + mario.h <= p.y + 12 && mario.dy >= 0) {
                     mario.y = p.y - mario.h;
@@ -313,7 +341,6 @@
                 }
             });
 
-            // Kẻ địch
             enemies.forEach(e => {
                 if (!e.alive) return;
                 e.x += e.dir * 1.0;
@@ -322,7 +349,7 @@
                 if (mario.x < e.x + e.w && mario.x + mario.w > e.x && mario.y + mario.h >= e.y && mario.y + mario.h <= e.y + 12 && mario.dy > 0) {
                     e.alive = false;
                     mario.dy = -8;
-                } else if (mario.x < e.x + e.w && mario.x + mario.w > e.x && mario.y < e.y + e.h && mario.y + mario.h > e.y) {
+                } else if (mario.x < e.x + e.w && mario.x + mario.w > e.x && mario.y + mario.h < e.y + e.h && mario.y + mario.h > e.y) {
                     mario.x = 40; mario.y = 240;
                 }
             });
@@ -346,7 +373,7 @@
             if (mode === 'easy') u.normalUnlocked = true;
             if (mode === 'normal') u.hardUnlocked = true;
 
-            localStorage.setItem("mario_responsive_db", JSON.stringify(db));
+            localStorage.setItem("mario_ultimate_db", JSON.stringify(db));
 
             document.getElementById("winCoinsEarned").innerText = `🪙 +${levelCoins} Xu kiếm được`;
             document.getElementById("winTotalCoins").innerText = `💰 Tổng xu tài khoản (${currentUser}): ${u.coins}`;
@@ -358,14 +385,14 @@
             ctx.save();
             ctx.translate(-cameraX, 0);
 
-            // 1. Mây trời HD
+            // 1. Mây
             ctx.fillStyle = "#fff";
             clouds.forEach(c => {
                 ctx.fillRect(c.x + 4, c.y, 36, 14);
                 ctx.fillRect(c.x, c.y + 4, 44, 8);
             });
 
-            // 2. Mặt đất HD
+            // 2. Mặt đất
             ctx.fillStyle = "#c84c0c";
             for (let x = 0; x < worldWidth; x += 24) {
                 let inGap = gaps.some(g => x >= g.x && x < g.x + g.w);
@@ -380,7 +407,7 @@
                 }
             }
 
-            // 3. Ống cống xanh HD
+            // 3. Ống cống
             pipes.forEach(p => {
                 ctx.fillStyle = "#008800";
                 ctx.fillRect(p.x + p.w - 12, p.y, 12, p.h);
@@ -393,7 +420,7 @@
                 ctx.strokeRect(p.x, p.y, p.w, p.h);
             });
 
-            // 4. Hộp ? HD
+            // 4. Hộp ?
             blocks.forEach(b => {
                 ctx.fillStyle = b.hit ? "#808080" : "#fc9838";
                 ctx.fillRect(b.x, b.y, b.w, b.h);
@@ -405,7 +432,7 @@
                 ctx.fillText(b.hit ? "" : "?", b.x + 7, b.y + 17);
             });
 
-            // 5. Quái Goomba HD
+            // 5. Quái Goomba
             enemies.forEach(e => {
                 if (!e.alive) return;
                 ctx.fillStyle = "#a81000";
@@ -425,23 +452,22 @@
             ctx.fillStyle = "#00d800";
             ctx.fillRect(flagX + 6, 100, 24, 16);
 
-            // 7. Mario HD chuẩn Pixel Art
+            // 7. Mario HD
             let mx = mario.x;
             let my = mario.y;
-            ctx.fillStyle = "#e40058"; // Mũ đỏ
+            ctx.fillStyle = "#e40058";
             ctx.fillRect(mx + 3, my, 18, 7);
-            ctx.fillStyle = "#fc9838"; // Mặt
+            ctx.fillStyle = "#fc9838";
             ctx.fillRect(mx + 4, my + 7, 16, 9);
-            ctx.fillStyle = "#68381c"; // Râu
+            ctx.fillStyle = "#68381c";
             ctx.fillRect(mx + 12, my + 11, 8, 3);
-            ctx.fillStyle = "#e40058"; // Áo
+            ctx.fillStyle = "#e40058";
             ctx.fillRect(mx + 3, my + 16, 18, 9);
-            ctx.fillStyle = "#0000d8"; // Quần yếm
+            ctx.fillStyle = "#0000d8";
             ctx.fillRect(mx + 4, my + 25, 16, 11);
 
             ctx.restore();
 
-            // HUD UI
             if (isPlaying) {
                 ctx.fillStyle = "#fff";
                 ctx.font = "bold 14px monospace";
@@ -456,7 +482,6 @@
             requestAnimationFrame(gameLoop);
         }
 
-        // Bàn phím máy tính
         window.addEventListener("keydown", e => {
             if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") keys.left = true;
             if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") keys.right = true;
@@ -472,7 +497,6 @@
             if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") keys.right = false;
         });
 
-        // Nút cảm ứng điện thoại
         function bindTouch(btnId, keyName) {
             let b = document.getElementById(btnId);
             b.addEventListener("touchstart", (e) => { e.preventDefault(); keys[keyName] = true; });
