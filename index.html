@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Super Mario Bros - Hard Underground Cave Edition</title>
+    <title>Super Mario Bros - Mobile Fullscreen Edition</title>
     <style>
         * { box-sizing: border-box; touch-action: none; user-select: none; }
         body { margin: 0; padding: 5px; background: #000; text-align: center; font-family: 'Courier New', Courier, monospace; color: #fff; }
@@ -16,8 +16,20 @@
             background: #5c94fc;
             border: 4px solid #fff;
             border-radius: 8px;
-            box-shadow: 0 0 20px rgba(255,255,255,0.4);
+            box-shadow: 0 0 25px rgba(255,255,255,0.5);
             overflow: hidden;
+        }
+
+        /* Tối ưu chế độ Fullscreen */
+        .game-wrapper:fullscreen {
+            max-width: 100vw;
+            width: 100vw;
+            height: 100vh;
+            border: none;
+            border-radius: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         canvas {
@@ -43,7 +55,6 @@
         .overlay h1 { margin: 0 0 8px 0; color: #fff; text-shadow: 3px 3px #d80000; font-size: clamp(22px, 5vw, 34px); }
         .overlay h3 { margin: 4px 0 12px 0; font-size: clamp(12px, 3vw, 16px); color: #f8d800; text-shadow: 1px 1px #000; }
         
-        /* Màn hình đen chuyển cảnh 1.8 giây */
         #transitionOverlay {
             display: none;
             position: absolute;
@@ -71,8 +82,10 @@
             border: 3px solid #fff;
             border-radius: 8px;
             padding: 15px;
-            width: 85%;
-            max-width: 400px;
+            width: 90%;
+            max-width: 420px;
+            max-height: 85vh;
+            overflow-y: auto;
             text-align: center;
         }
         .modal-box h2 { color: #f8d800; margin-top: 0; font-size: 20px; }
@@ -83,9 +96,9 @@
             background: #222;
             border: 2px solid #444;
             padding: 8px 12px;
-            margin: 8px 0;
+            margin: 6px 0;
             border-radius: 4px;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .game-btn-corner {
@@ -104,6 +117,7 @@
         }
         #btnShopCorner { left: 10px; }
         #btnSettingsCorner { right: 10px; }
+        #btnFullscreenCorner { right: 110px; background: rgba(0, 168, 0, 0.8); }
 
         #deathOverlay {
             display: none;
@@ -151,22 +165,20 @@
 <body>
 
     <div class="game-wrapper" id="gameContainer">
-        <!-- NÚT SHOP & SETTINGS KHI ĐANG CHƠI -->
+        <!-- NÚT SHOP, SETTINGS VÀ TOÀN MÀN HÌNH -->
         <button id="btnShopCorner" class="game-btn-corner" style="display:none;" onclick="openShop()">🛒 Shop</button>
+        <button id="btnFullscreenCorner" class="game-btn-corner" onclick="toggleFullscreen()">⛶ Phóng to</button>
         <button id="btnSettingsCorner" class="game-btn-corner" style="display:none;" onclick="openSettings()">⚙️ Cài đặt</button>
 
-        <!-- MÀN HÌNH ĐEN CHUYỂN CẢNH -->
         <div id="transitionOverlay"></div>
 
-        <!-- 1. ĐĂNG NHẬP -->
         <div id="loginScreen" class="overlay">
             <h1>SUPER MARIO BROS</h1>
-            <h3>HARD CAVE EDITION</h3>
+            <h3>MOBILE FULLSCREEN EDITION</h3>
             <input type="text" id="userInput" placeholder="Nhập tên tài khoản...">
             <button class="btn-ui" style="background:#00a800;" onclick="handleLogin()">VÀO CHƠI (0 XU) ➔</button>
         </div>
 
-        <!-- 2. CHỌN MÀN CHƠI -->
         <div id="menuScreen" class="overlay" style="display: none;">
             <h1>CHỌN ĐỘ KHÓ</h1>
             <h3 id="userStatus">Tài khoản: Khách | 0 Xu</h3>
@@ -179,30 +191,40 @@
             </div>
         </div>
 
-        <!-- 3. MODAL CỬA HÀNG (SHOP) -->
         <div id="shopModal" class="modal-overlay">
             <div class="modal-box">
-                <h2>🛒 CỬA HÀNG SKIN</h2>
+                <h2>🛒 CỬA HÀNG SKIN CAO CẤP</h2>
                 <p id="shopUserCoins" style="color:#f8d800; font-size:14px; margin-bottom:10px;">💰 Xu của bạn: 0</p>
                 
                 <div class="shop-item">
                     <span>🔴 Mario Đỏ Mặc Định</span>
-                    <button class="btn-ui" style="width:90px; padding:6px; font-size:12px;" id="skinDefaultBtn" onclick="selectSkin('default')">Đang dùng</button>
+                    <button class="btn-ui" style="width:95px; padding:6px; font-size:12px;" id="skinDefaultBtn" onclick="selectSkin('default')">Đang dùng</button>
                 </div>
                 <div class="shop-item">
-                    <span>🔵 Mario Xanh Biển</span>
-                    <button class="btn-ui" style="width:90px; padding:6px; font-size:12px;" id="skinBlueBtn" onclick="buyOrSelectSkin('blue', 15)">15 🪙</button>
+                    <span>🟡 Minion HD Pixel</span>
+                    <button class="btn-ui" style="width:95px; padding:6px; font-size:12px;" id="skinMinionBtn" onclick="buyOrSelectSkin('minion', 50)">50 🪙</button>
                 </div>
                 <div class="shop-item">
-                    <span>🟡 Mario Vàng Kim</span>
-                    <button class="btn-ui" style="width:90px; padding:6px; font-size:12px;" id="skinGoldBtn" onclick="buyOrSelectSkin('gold', 30)">30 🪙</button>
+                    <span>🔴 Among Us Red HD</span>
+                    <button class="btn-ui" style="width:95px; padding:6px; font-size:12px;" id="skinAmongUsBtn" onclick="buyOrSelectSkin('amongus', 60)">60 🪙</button>
+                </div>
+                <div class="shop-item">
+                    <span>🧪 Senku (Dr. Stone) HD</span>
+                    <button class="btn-ui" style="width:95px; padding:6px; font-size:12px;" id="skinSenkuBtn" onclick="buyOrSelectSkin('senku', 70)">70 🪙</button>
+                </div>
+                <div class="shop-item">
+                    <span>🧟 Zombie (PvZ) HD</span>
+                    <button class="btn-ui" style="width:95px; padding:6px; font-size:12px;" id="skinZombieBtn" onclick="buyOrSelectSkin('zombie', 80)">80 🪙</button>
+                </div>
+                <div class="shop-item">
+                    <span>🌌 Jotaro Kujo (JoJo) HD</span>
+                    <button class="btn-ui" style="width:95px; padding:6px; font-size:12px;" id="skinJotaroBtn" onclick="buyOrSelectSkin('jotaro', 100)">100 🪙</button>
                 </div>
 
                 <button class="btn-ui" style="background:#555; margin-top:12px;" onclick="closeShop()">ĐÓNG ✖</button>
             </div>
         </div>
 
-        <!-- 4. MODAL CÀI ĐẶT (SETTINGS) -->
         <div id="settingsModal" class="modal-overlay">
             <div class="modal-box">
                 <h2>⚙️ CÀI ĐẶT TRÒ CHƠI</h2>
@@ -216,14 +238,12 @@
             </div>
         </div>
 
-        <!-- 5. MÀN HÌNH CHẾT (YOU DIE) -->
         <div id="deathOverlay" class="overlay">
             <h1>YOU DIE 💀</h1>
             <p>Mất sạch xu thu thập ở màn này!</p>
             <button class="btn-ui" style="background:#d80000; border-color:#fff;" onclick="showMenu()">THỬ LẠI ↺</button>
         </div>
 
-        <!-- 6. MÀN HÌNH CHIẾN THẮNG -->
         <div id="winScreen" class="overlay" style="display: none; background: rgba(0,0,0,0.95);">
             <h1 style="color:#f8d800;">STAGE CLEAR! 🚩</h1>
             <h3 id="winCoinsEarned">🪙 +0 Xu kiếm được</h3>
@@ -234,7 +254,6 @@
         <canvas id="canvas" width="640" height="360"></canvas>
     </div>
 
-    <!-- NÚT ĐIỀU KHIỂN ĐIỆN THOẠI -->
     <div class="touch-controls">
         <div class="d-pad">
             <button class="btn-ctrl" id="btnLeft" data-key="left">◄</button>
@@ -253,7 +272,29 @@
 
         let currentUser = null;
         let soundEnabled = true;
-        let db = JSON.parse(localStorage.getItem("mario_hardcave_db") || "{}");
+        let db = JSON.parse(localStorage.getItem("mario_ultrahd_db") || "{}");
+
+        // HÀM BẬT / TẮT TOÀN MÀN HÌNH ĐIỆN THOẠI
+        function toggleFullscreen() {
+            let container = document.getElementById("gameContainer");
+            let btn = document.getElementById("btnFullscreenCorner");
+
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                }
+                btn.innerText = "🗗 Thu nhỏ";
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+                btn.innerText = "⛶ Phóng to";
+            }
+        }
 
         function handleLogin() {
             let name = document.getElementById("userInput").value.trim();
@@ -266,7 +307,7 @@
                     equippedSkin: 'default',
                     unlockedSkins: ['default'] 
                 };
-                localStorage.setItem("mario_hardcave_db", JSON.stringify(db));
+                localStorage.setItem("mario_ultrahd_db", JSON.stringify(db));
             }
             currentUser = name;
             showMenu();
@@ -321,27 +362,31 @@
 
         function updateShopUI() {
             let u = db[currentUser];
-            let defBtn = document.getElementById("skinDefaultBtn");
-            if (u.equippedSkin === 'default') { defBtn.innerText = "Đang dùng"; defBtn.disabled = true; }
-            else { defBtn.innerText = "Chọn"; defBtn.disabled = false; }
+            let skinList = [
+                { id: 'default', btn: 'skinDefaultBtn', price: 0 },
+                { id: 'minion', btn: 'skinMinionBtn', price: 50 },
+                { id: 'amongus', btn: 'skinAmongUsBtn', price: 60 },
+                { id: 'senku', btn: 'skinSenkuBtn', price: 70 },
+                { id: 'zombie', btn: 'skinZombieBtn', price: 80 },
+                { id: 'jotaro', btn: 'skinJotaroBtn', price: 100 }
+            ];
 
-            let blueBtn = document.getElementById("skinBlueBtn");
-            if (u.unlockedSkins.includes('blue')) {
-                if (u.equippedSkin === 'blue') { blueBtn.innerText = "Đang dùng"; blueBtn.disabled = true; }
-                else { blueBtn.innerText = "Chọn"; blueBtn.disabled = false; }
-            } else { blueBtn.innerText = "15 🪙 (Mua)"; blueBtn.disabled = false; }
-
-            let goldBtn = document.getElementById("skinGoldBtn");
-            if (u.unlockedSkins.includes('gold')) {
-                if (u.equippedSkin === 'gold') { goldBtn.innerText = "Đang dùng"; goldBtn.disabled = true; }
-                else { goldBtn.innerText = "Chọn"; goldBtn.disabled = false; }
-            } else { goldBtn.innerText = "30 🪙 (Mua)"; goldBtn.disabled = false; }
+            skinList.forEach(item => {
+                let btnEl = document.getElementById(item.btn);
+                if (u.unlockedSkins.includes(item.id)) {
+                    if (u.equippedSkin === item.id) { btnEl.innerText = "Đang dùng"; btnEl.disabled = true; }
+                    else { btnEl.innerText = "Chọn"; btnEl.disabled = false; }
+                } else {
+                    btnEl.innerText = `${item.price} 🪙 (Mua)`;
+                    btnEl.disabled = false;
+                }
+            });
         }
 
         function selectSkin(skinName) {
             let u = db[currentUser];
             u.equippedSkin = skinName;
-            localStorage.setItem("mario_hardcave_db", JSON.stringify(db));
+            localStorage.setItem("mario_ultrahd_db", JSON.stringify(db));
             updateShopUI();
         }
 
@@ -354,12 +399,12 @@
                     u.coins -= cost;
                     u.unlockedSkins.push(skinName);
                     u.equippedSkin = skinName;
-                    localStorage.setItem("mario_hardcave_db", JSON.stringify(db));
+                    localStorage.setItem("mario_ultrahd_db", JSON.stringify(db));
                     document.getElementById("shopUserCoins").innerText = `💰 Xu của bạn: ${u.coins}`;
                     updateShopUI();
                     playSound('powerup');
                 } else {
-                    alert("Bạn không đủ Xu để mua skin này!");
+                    alert(`Bạn cần ít nhất ${cost} Xu để mua skin này!`);
                 }
             }
         }
@@ -566,8 +611,8 @@
 
                     let blockType = 'coin';
                     let rItem = Math.random();
-                    if (rItem < 0.25) blockType = 'mushroom';
-                    else if (rItem < 0.4) blockType = 'star';
+                    if (rItem < 0.35) blockType = 'mushroom';
+                    else if (rItem < 0.50) blockType = 'star';
 
                     blocks.push({ x: currentX - 20, y: 165 + (Math.random() > 0.5 ? 0 : -20), w: 24, h: 24, hit: false, content: blockType, type: 'question' });
                     
@@ -587,7 +632,6 @@
                 currentX += Math.floor(Math.random() * 180) + 200;
             }
 
-            // Nếu ở chế độ HARD, đặt ống cống nằm ngang ở gần cuối bản đồ
             if (mode === 'hard') {
                 horizontalPipe = { x: flagX - 180, y: 240, w: 48, h: 40 };
             }
@@ -599,30 +643,18 @@
             }
         }
 
-        // Tạo map hang động (underground cave) khi bước vào ống cống ngang ở Hard mode
         function generateUndergroundMap() {
             worldWidth = 1800;
-            pipes = [];
-            piranhas = [];
-            blocks = [];
-            items = [];
-            enemies = [];
-            gaps = [];
-            clouds = [];
-            mountains = [];
-            bushes = [];
+            pipes = []; piranhas = []; blocks = []; items = []; enemies = []; gaps = []; clouds = []; mountains = []; bushes = [];
             horizontalPipe = null;
 
-            // Tạo các bậc thang và gạch đá đặc trưng màu xanh ngọc (Cyan/Blue cave style)
             blocks.push({ x: 300, y: 180, w: 24, h: 24, hit: true, type: 'brick' });
             blocks.push({ x: 324, y: 180, w: 24, h: 24, hit: true, type: 'brick' });
             blocks.push({ x: 600, y: 150, w: 24, h: 24, hit: false, content: 'mushroom', type: 'question' });
             
-            // Kẻ địch trong hang động
             enemies.push({ x: 500, y: 256, w: 24, h: 24, type: 'goomba', dir: -1, alive: true, state: 'walking', shellSpeed: 0 });
             enemies.push({ x: 900, y: 256, w: 24, h: 24, type: 'koopa', dir: -1, alive: true, state: 'walking', shellSpeed: 0 });
 
-            // Ống cống xanh thoát hiểm ở cuối hang động
             caveExitPipe = { x: 1500, y: 220, w: 48, h: 60 };
         }
 
@@ -653,6 +685,25 @@
             }
         }
 
+        function winGame() {
+            isPlaying = false;
+            stopBGM();
+            playSound('win');
+            
+            let u = db[currentUser];
+            u.coins += levelCoins;
+            if (mode === 'easy') u.normalUnlocked = true;
+            if (mode === 'normal') u.hardUnlocked = true;
+
+            localStorage.setItem("mario_ultrahd_db", JSON.stringify(db));
+
+            document.getElementById("btnShopCorner").style.display = "none";
+            document.getElementById("btnSettingsCorner").style.display = "none";
+            document.getElementById("winCoinsEarned").innerText = `🪙 +${levelCoins} Xu kiếm được`;
+            document.getElementById("winTotalCoins").innerText = `💰 Tổng xu tài khoản: ${u.coins}`;
+            document.getElementById("winScreen").style.display = "flex";
+        }
+
         function update() {
             if (!isPlaying || isTransitioning) return;
 
@@ -681,12 +732,10 @@
             dustParticles.forEach(p => { p.life--; p.y -= 0.3; });
             dustParticles = dustParticles.filter(p => p.life > 0);
 
-            // Kiểm tra va chạm với ống cống ngang ở Hard mode để chuyển sang map hang động
             if (horizontalPipe && !isUnderground) {
                 if (mario.x < horizontalPipe.x + horizontalPipe.w && mario.x + mario.w > horizontalPipe.x &&
                     mario.y + mario.h > horizontalPipe.y && mario.y < horizontalPipe.y + horizontalPipe.h) {
                     
-                    // Kích hoạt hiệu ứng màn hình đen 1.8 giây
                     isTransitioning = true;
                     let transEl = document.getElementById("transitionOverlay");
                     transEl.style.display = "flex";
@@ -694,19 +743,14 @@
                     setTimeout(() => {
                         isUnderground = true;
                         generateUndergroundMap();
-                        mario.x = 40;
-                        mario.y = 244;
-                        mario.dx = 0;
-                        mario.dy = 0;
-                        cameraX = 0;
+                        mario.x = 40; mario.y = 244; mario.dx = 0; mario.dy = 0; cameraX = 0;
                         transEl.style.display = "none";
                         isTransitioning = false;
-                    }, 1800); // 1.8 giây chính xác
+                    }, 1800);
                     return;
                 }
             }
 
-            // Kiểm tra va chạm ống cống thoát hiểm cuối hang động ngầm
             if (isUnderground && caveExitPipe) {
                 if (mario.x < caveExitPipe.x + caveExitPipe.w && mario.x + mario.w > caveExitPipe.x &&
                     mario.y + mario.h > caveExitPipe.y && mario.y < caveExitPipe.y + caveExitPipe.h) {
@@ -731,11 +775,7 @@
                 }
                 if (p.state === 'rising') {
                     p.offsetY += 1;
-                    if (p.offsetY >= p.h) {
-                        p.offsetY = p.h;
-                        p.state = 'visible';
-                        p.visibleTimer = 120;
-                    }
+                    if (p.offsetY >= p.h) { p.offsetY = p.h; p.state = 'visible'; p.visibleTimer = 120; }
                 } else if (p.state === 'visible') {
                     p.visibleTimer--;
                     if (p.visibleTimer <= 0) p.state = 'lowering';
@@ -869,27 +909,103 @@
             if (!isUnderground && mario.x >= flagX) winGame();
         }
 
-        function winGame() {
-            isPlaying = false;
-            document.getElementById("btnShopCorner").style.display = "none";
-            document.getElementById("btnSettingsCorner").style.display = "none";
-            playSound('win');
-
-            let u = db[currentUser];
-            u.coins += levelCoins;
-
-            if (mode === 'easy') u.normalUnlocked = true;
-            if (mode === 'normal') u.hardUnlocked = true;
-
-            localStorage.setItem("mario_hardcave_db", JSON.stringify(db));
-
-            document.getElementById("winCoinsEarned").innerText = `🪙 +${levelCoins} Xu kiếm được`;
-            document.getElementById("winTotalCoins").innerText = `💰 Tổng xu tài khoản (${currentUser}): ${u.coins}`;
-            document.getElementById("winScreen").style.display = "flex";
+        function drawCustomSkin(skinId, mx, my, mw, mh, facing) {
+            if (skinId === 'minion') {
+                ctx.fillStyle = "#f8d800";
+                ctx.fillRect(mx + 2, my, 20, 26);
+                ctx.fillStyle = "#d4b800";
+                ctx.fillRect(facing === 'right' ? mx + 18 : mx + 2, my + 2, 4, 24);
+                ctx.fillStyle = "#222";
+                ctx.fillRect(mx + 1, my + 6, 22, 4);
+                ctx.fillStyle = "#ccc";
+                ctx.fillRect(mx + 6, my + 3, 12, 10);
+                ctx.fillStyle = "#fff";
+                ctx.fillRect(mx + 8, my + 5, 8, 6);
+                ctx.fillStyle = "#000";
+                ctx.fillRect(mx + (facing === 'right' ? 12 : 9), my + 7, 3, 3);
+                ctx.fillStyle = "#0058f8";
+                ctx.fillRect(mx + 3, my + 18, 18, 14);
+                ctx.fillStyle = "#0038b8";
+                ctx.fillRect(mx + 3, my + 26, 18, 6);
+                ctx.fillStyle = "#000";
+                ctx.fillRect(mx + 3, my + 32, 7, 4);
+                ctx.fillRect(mx + 14, my + 32, 7, 4);
+            } else if (skinId === 'amongus') {
+                ctx.fillStyle = "#d80000";
+                ctx.fillRect(mx + 2, my + 3, 20, 25);
+                ctx.fillStyle = "#a00000";
+                ctx.fillRect(facing === 'right' ? mx + 2 : mx + 16, my + 5, 6, 23);
+                ctx.fillStyle = "#d80000";
+                ctx.fillRect(facing === 'right' ? mx - 2 : mx + 18, my + 8, 8, 14);
+                ctx.fillStyle = "#555";
+                let visorX = facing === 'right' ? mx + 10 : mx + 2;
+                ctx.fillRect(visorX, my + 7, 11, 9);
+                ctx.fillStyle = "#88ccff";
+                ctx.fillRect(visorX + 2, my + 8, 8, 6);
+                ctx.fillStyle = "#fff";
+                ctx.fillRect(visorX + 3, my + 9, 3, 2);
+                ctx.fillStyle = "#a00000";
+                ctx.fillRect(mx + 3, my + 28, 6, 8);
+                ctx.fillRect(mx + 15, my + 28, 6, 8);
+            } else if (skinId === 'senku') {
+                ctx.fillStyle = "#00ffaa";
+                ctx.fillRect(mx, my - 8, 24, 14);
+                ctx.fillStyle = "#00aa66";
+                ctx.fillRect(mx + 4, my - 12, 16, 6);
+                ctx.fillStyle = "#fc9838";
+                ctx.fillRect(mx + 4, my + 6, 16, 10);
+                ctx.fillStyle = "#d80000";
+                ctx.fillRect(mx + (facing === 'right' ? 13 : 6), my + 8, 3, 5);
+                ctx.fillStyle = "#f8f8d8";
+                ctx.fillRect(mx + 3, my + 16, 18, 14);
+                ctx.fillStyle = "#68381c";
+                ctx.fillRect(mx + 3, my + 22, 18, 3);
+            } else if (skinId === 'zombie') {
+                ctx.fillStyle = "#609050";
+                ctx.fillRect(mx + 2, my + 1, 20, 15);
+                ctx.fillStyle = "#fff";
+                ctx.fillRect(mx + 3, my + 4, 8, 8);
+                ctx.fillRect(mx + 13, my + 5, 6, 6);
+                ctx.fillStyle = "#000";
+                ctx.fillRect(mx + 7, my + 7, 2, 2);
+                ctx.fillRect(mx + 15, my + 7, 2, 2);
+                ctx.fillStyle = "#553311";
+                ctx.fillRect(mx + 2, my + 16, 20, 13);
+                ctx.fillStyle = "#d80000";
+                ctx.fillRect(mx + 10, my + 16, 3, 9);
+                ctx.fillStyle = "#111155";
+                ctx.fillRect(mx + 4, my + 29, 16, 7);
+            } else if (skinId === 'jotaro') {
+                ctx.fillStyle = "#0a152d";
+                ctx.fillRect(mx + 1, my - 2, 22, 8);
+                ctx.fillStyle = "#f8d800";
+                ctx.fillRect(mx + 10, my, 4, 4);
+                ctx.fillStyle = "#fc9838";
+                ctx.fillRect(mx + 4, my + 6, 16, 8);
+                ctx.fillStyle = "#d800d8";
+                ctx.fillRect(mx + 8, my + 14, 8, 11);
+                ctx.fillStyle = "#0a152d";
+                ctx.fillRect(mx + 1, my + 14, 6, 18);
+                ctx.fillRect(mx + 17, my + 14, 6, 18);
+                ctx.fillStyle = "#f8d800";
+                ctx.fillRect(mx + 4, my + 15, 3, 7);
+            } else {
+                ctx.fillStyle = "#e40058";
+                ctx.fillRect(mx + 3, my, 18, 7);
+                ctx.fillStyle = "#fc9838";
+                ctx.fillRect(mx + 4, my + 7, 16, 9);
+                ctx.fillStyle = "#000";
+                ctx.fillRect(mx + (facing === 'right' ? 14 : 6), my + 9, 3, 3);
+                ctx.fillStyle = "#68381c";
+                ctx.fillRect(mx + (facing === 'right' ? 10 : 4), my + 12, 10, 3);
+                ctx.fillStyle = "#e40058";
+                ctx.fillRect(mx + 3, my + 16, 18, 9);
+                ctx.fillStyle = "#0000d8";
+                ctx.fillRect(mx + 4, my + 25, 16, mh - 25);
+            }
         }
 
         function draw() {
-            // Nếu đang trong map hang động ngầm, nền là màu đen tuyệt đối (#000)
             if (isUnderground) {
                 canvas.style.backgroundColor = "#000";
             } else {
@@ -900,7 +1016,6 @@
             ctx.save();
             ctx.translate(-cameraX, 0);
 
-            // Chỉ vẽ mây, núi, bụi cỏ khi ở ngoài trời (không ở hang động ngầm)
             if (!isUnderground) {
                 mountains.forEach(m => {
                     ctx.fillStyle = "#00a800";
@@ -934,7 +1049,6 @@
                 });
             }
 
-            // Vẽ mặt đất (Nếu ở hang động ngầm, mặt đất đổi thành màu xanh ngọc/cyan đặc trưng cổ điển)
             for (let x = 0; x < worldWidth; x += 24) {
                 let inGap = !isUnderground && gaps.some(g => x >= g.x && x < g.x + g.w);
                 if (!inGap) {
@@ -951,13 +1065,11 @@
             ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
             dustParticles.forEach(p => ctx.fillRect(p.x, p.y, p.size, p.size));
 
-            // Vẽ ống cống nằm ngang cuối màn hình Hard
             if (horizontalPipe && !isUnderground) {
                 ctx.fillStyle = "#00a800";
                 ctx.fillRect(horizontalPipe.x, horizontalPipe.y, horizontalPipe.w, horizontalPipe.h);
                 ctx.fillStyle = "#00d800";
                 ctx.fillRect(horizontalPipe.x, horizontalPipe.y + 6, horizontalPipe.w, 8);
-                // Miệng ống cống ngang
                 ctx.fillStyle = "#00a800";
                 ctx.fillRect(horizontalPipe.x, horizontalPipe.y - 4, 14, horizontalPipe.h + 8);
                 ctx.strokeStyle = "#000";
@@ -965,7 +1077,6 @@
                 ctx.strokeRect(horizontalPipe.x, horizontalPipe.y, horizontalPipe.w, horizontalPipe.h);
             }
 
-            // Vẽ ống cống thoát hiểm trong hang động ngầm
             if (isUnderground && caveExitPipe) {
                 ctx.fillStyle = "#00a800";
                 ctx.fillRect(caveExitPipe.x, caveExitPipe.y, caveExitPipe.w, caveExitPipe.h);
@@ -1037,19 +1148,35 @@
 
             items.forEach(it => {
                 if (it.type === 'mushroom') {
-                    ctx.fillStyle = "#e40058";
-                    ctx.fillRect(it.x, it.y, it.w, 14);
+                    ctx.fillStyle = "#d80000";
+                    ctx.fillRect(it.x + 2, it.y, 20, 14);
                     ctx.fillStyle = "#ffffff";
                     ctx.fillRect(it.x + 4, it.y + 3, 5, 5);
                     ctx.fillRect(it.x + 15, it.y + 3, 5, 5);
-                    ctx.fillStyle = "#fc9838";
+                    ctx.fillRect(it.x + 10, it.y + 1, 4, 3);
+                    ctx.fillStyle = "#f8d8a0";
                     ctx.fillRect(it.x + 4, it.y + 14, 16, 10);
-                } else {
+                    ctx.fillStyle = "#000000";
+                    ctx.fillRect(it.x + 7, it.y + 16, 2, 5);
+                    ctx.fillRect(it.x + 15, it.y + 16, 2, 5);
+                } else if (it.type === 'star') {
                     ctx.fillStyle = "#f8d800";
-                    ctx.fillRect(it.x + 2, it.y, 20, 24);
+                    ctx.beginPath();
+                    ctx.moveTo(it.x + 12, it.y);
+                    ctx.lineTo(it.x + 15, it.y + 8);
+                    ctx.lineTo(it.x + 24, it.y + 8);
+                    ctx.lineTo(it.x + 17, it.y + 14);
+                    ctx.lineTo(it.x + 20, it.y + 22);
+                    ctx.lineTo(it.x + 12, it.y + 17);
+                    ctx.lineTo(it.x + 4, it.y + 22);
+                    ctx.lineTo(it.x + 7, it.y + 14);
+                    ctx.lineTo(it.x, it.y + 8);
+                    ctx.lineTo(it.x + 9, it.y + 8);
+                    ctx.closePath();
+                    ctx.fill();
                     ctx.fillStyle = "#000";
-                    ctx.fillRect(it.x + 6, it.y + 6, 3, 6);
-                    ctx.fillRect(it.x + 15, it.y + 6, 3, 6);
+                    ctx.fillRect(it.x + 9, it.y + 9, 2, 5);
+                    ctx.fillRect(it.x + 13, it.y + 9, 2, 5);
                 }
             });
 
@@ -1106,34 +1233,9 @@
             }
 
             if (!(mario.invulnerableTimer > 0 && Math.floor(Date.now() / 80) % 2 === 0)) {
-                let mx = mario.x;
-                let my = mario.y;
                 let u = db[currentUser];
-                let skinHat = "#e40058";
-                let skinShirt = "#e40058";
-                let skinPants = "#0000d8";
-
-                if (u) {
-                    if (u.equippedSkin === 'blue') { skinHat = "#0058f8"; skinShirt = "#0058f8"; skinPants = "#d80000"; }
-                    else if (u.equippedSkin === 'gold') { skinHat = "#f8d800"; skinShirt = "#f8d800"; skinPants = "#0058f8"; }
-                }
-
-                if (mario.starTimer > 0 && Math.floor(Date.now() / 50) % 2 === 0) {
-                    skinHat = "#f8d800"; skinShirt = "#00d800";
-                }
-
-                ctx.fillStyle = skinHat;
-                ctx.fillRect(mx + 3, my, 18, 7);
-                ctx.fillStyle = "#fc9838";
-                ctx.fillRect(mx + 4, my + 7, 16, 9);
-                ctx.fillStyle = "#000";
-                ctx.fillRect(mx + (mario.facing === 'right' ? 14 : 6), my + 9, 3, 3);
-                ctx.fillStyle = "#68381c";
-                ctx.fillRect(mx + (mario.facing === 'right' ? 10 : 4), my + 12, 10, 3);
-                ctx.fillStyle = skinShirt;
-                ctx.fillRect(mx + 3, my + 16, 18, 9);
-                ctx.fillStyle = skinPants;
-                ctx.fillRect(mx + 4, my + 25, 16, mario.h - 25);
+                let currentSkin = u ? u.equippedSkin : 'default';
+                drawCustomSkin(currentSkin, mario.x, mario.y, mario.w, mario.h, mario.facing);
             }
 
             ctx.restore();
