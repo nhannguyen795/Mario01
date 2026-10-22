@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Super Mario Bros - Mobile Fullscreen Edition</title>
+    <title>Super Mario Bros - Fixed Block Spacing Edition</title>
     <style>
         * { box-sizing: border-box; touch-action: none; user-select: none; }
         body { margin: 0; padding: 5px; background: #000; text-align: center; font-family: 'Courier New', Courier, monospace; color: #fff; }
@@ -20,7 +20,6 @@
             overflow: hidden;
         }
 
-        /* Tối ưu chế độ Fullscreen */
         .game-wrapper:fullscreen {
             max-width: 100vw;
             width: 100vw;
@@ -165,7 +164,6 @@
 <body>
 
     <div class="game-wrapper" id="gameContainer">
-        <!-- NÚT SHOP, SETTINGS VÀ TOÀN MÀN HÌNH -->
         <button id="btnShopCorner" class="game-btn-corner" style="display:none;" onclick="openShop()">🛒 Shop</button>
         <button id="btnFullscreenCorner" class="game-btn-corner" onclick="toggleFullscreen()">⛶ Phóng to</button>
         <button id="btnSettingsCorner" class="game-btn-corner" style="display:none;" onclick="openSettings()">⚙️ Cài đặt</button>
@@ -174,7 +172,7 @@
 
         <div id="loginScreen" class="overlay">
             <h1>SUPER MARIO BROS</h1>
-            <h3>MOBILE FULLSCREEN EDITION</h3>
+            <h3>FIXED SPACING & HARD CAVE EDITION</h3>
             <input type="text" id="userInput" placeholder="Nhập tên tài khoản...">
             <button class="btn-ui" style="background:#00a800;" onclick="handleLogin()">VÀO CHƠI (0 XU) ➔</button>
         </div>
@@ -274,7 +272,6 @@
         let soundEnabled = true;
         let db = JSON.parse(localStorage.getItem("mario_ultrahd_db") || "{}");
 
-        // HÀM BẬT / TẮT TOÀN MÀN HÌNH ĐIỆN THOẠI
         function toggleFullscreen() {
             let container = document.getElementById("gameContainer");
             let btn = document.getElementById("btnFullscreenCorner");
@@ -547,6 +544,7 @@
         let clouds = [];
         let mountains = [];
         let bushes = [];
+        let firebars = [];
         let dustParticles = [];
         let flagX = 1450;
 
@@ -586,7 +584,7 @@
         }
 
         function generateRandomMap() {
-            pipes = []; piranhas = []; blocks = []; items = []; enemies = []; gaps = []; clouds = []; mountains = []; bushes = [];
+            pipes = []; piranhas = []; blocks = []; items = []; enemies = []; gaps = []; clouds = []; mountains = []; bushes = []; firebars = [];
             let sectionCount = Math.floor(worldWidth / 250);
             let currentX = 450;
 
@@ -614,10 +612,11 @@
                     if (rItem < 0.35) blockType = 'mushroom';
                     else if (rItem < 0.50) blockType = 'star';
 
-                    blocks.push({ x: currentX - 20, y: 165 + (Math.random() > 0.5 ? 0 : -20), w: 24, h: 24, hit: false, content: blockType, type: 'question' });
+                    // ĐÃ SỬA: Đặt khối Lucky Box lùi xa sang trái ống cống 80px để tránh bị dính sát
+                    blocks.push({ x: currentX - 80, y: 165 + (Math.random() > 0.5 ? 0 : -20), w: 24, h: 24, hit: false, content: blockType, type: 'question' });
                     
                     let enemyType = Math.random() > 0.4 ? 'goomba' : 'koopa';
-                    enemies.push({ x: currentX + 70, y: 256, w: 24, h: 24, type: enemyType, dir: -1, alive: true, state: 'walking', shellSpeed: 0 });
+                    enemies.push({ x: currentX + 80, y: 256, w: 24, h: 24, type: enemyType, dir: -1, alive: true, state: 'walking', shellSpeed: 0 });
 
                 } else if (randType < 0.65 && mode !== 'easy') {
                     let gWidth = mode === 'hard' ? (50 + Math.floor(Math.random() * 40)) : 50;
@@ -643,19 +642,55 @@
             }
         }
 
+        // BẢN ĐỒ DƯỚI CỐNG THỬ THÁCH CAO
         function generateUndergroundMap() {
-            worldWidth = 1800;
-            pipes = []; piranhas = []; blocks = []; items = []; enemies = []; gaps = []; clouds = []; mountains = []; bushes = [];
+            worldWidth = 2800;
+            pipes = []; piranhas = []; blocks = []; items = []; enemies = []; gaps = []; clouds = []; mountains = []; bushes = []; firebars = [];
             horizontalPipe = null;
 
-            blocks.push({ x: 300, y: 180, w: 24, h: 24, hit: true, type: 'brick' });
-            blocks.push({ x: 324, y: 180, w: 24, h: 24, hit: true, type: 'brick' });
-            blocks.push({ x: 600, y: 150, w: 24, h: 24, hit: false, content: 'mushroom', type: 'question' });
-            
-            enemies.push({ x: 500, y: 256, w: 24, h: 24, type: 'goomba', dir: -1, alive: true, state: 'walking', shellSpeed: 0 });
-            enemies.push({ x: 900, y: 256, w: 24, h: 24, type: 'koopa', dir: -1, alive: true, state: 'walking', shellSpeed: 0 });
+            // Hố sâu nguy hiểm dưới cống
+            gaps.push({ x: 500, w: 70 });
+            gaps.push({ x: 1000, w: 85 });
+            gaps.push({ x: 1600, w: 90 });
+            gaps.push({ x: 2100, w: 80 });
 
-            caveExitPipe = { x: 1500, y: 220, w: 48, h: 60 };
+            // Cụm Lửa Xoay 360 độ (Firebars)
+            firebars.push({ cx: 535, cy: 220, length: 60, angle: 0, speed: 0.04 });
+            firebars.push({ cx: 1042, cy: 200, length: 70, angle: Math.PI, speed: -0.05 });
+            firebars.push({ cx: 1645, cy: 210, length: 75, angle: 0, speed: 0.06 });
+            firebars.push({ cx: 2140, cy: 190, length: 65, angle: Math.PI / 2, speed: -0.05 });
+
+            // Ống cống trần nhà mọc ngược và cống sàn
+            pipes.push({ x: 350, y: 220, w: 48, h: 60, isTop: false });
+            pipes.push({ x: 750, y: 0, w: 48, h: 90, isTop: true });
+            pipes.push({ x: 1250, y: 200, w: 48, h: 80, isTop: false });
+            pipes.push({ x: 1850, y: 0, w: 48, h: 100, isTop: true });
+
+            // Piranha cây ăn thịt dưới cống
+            piranhas.push({ pipeX: 350, pipeY: 220, w: 24, h: 30, offsetY: 0, timer: 0, state: 'hidden' });
+            piranhas.push({ pipeX: 1250, pipeY: 200, w: 24, h: 30, offsetY: 0, timer: 100, state: 'hidden' });
+
+            // Khối gạch & Lucky box giữ khoảng cách chuẩn với các cống
+            blocks.push({ x: 250, y: 170, w: 24, h: 24, hit: false, content: 'mushroom', type: 'question' });
+            blocks.push({ x: 274, y: 170, w: 24, h: 24, hit: false, content: 'brick', type: 'brick' });
+
+            blocks.push({ x: 880, y: 160, w: 24, h: 24, hit: false, content: 'star', type: 'question' });
+            blocks.push({ x: 904, y: 160, w: 24, h: 24, hit: false, content: 'coin', type: 'question' });
+
+            blocks.push({ x: 1450, y: 150, w: 24, h: 24, hit: false, content: 'mushroom', type: 'question' });
+            blocks.push({ x: 1474, y: 150, w: 24, h: 24, hit: false, content: 'brick', type: 'brick' });
+
+            blocks.push({ x: 1980, y: 160, w: 24, h: 24, hit: false, content: 'coin', type: 'question' });
+
+            // Kẻ địch dồn dập
+            enemies.push({ x: 420, y: 256, w: 24, h: 24, type: 'goomba', dir: -1, alive: true, state: 'walking', shellSpeed: 0 });
+            enemies.push({ x: 650, y: 256, w: 24, h: 24, type: 'koopa', dir: -1, alive: true, state: 'walking', shellSpeed: 0 });
+            enemies.push({ x: 1150, y: 256, w: 24, h: 24, type: 'goomba', dir: -1, alive: true, state: 'walking', shellSpeed: 0 });
+            enemies.push({ x: 1350, y: 256, w: 24, h: 24, type: 'koopa', dir: -1, alive: true, state: 'walking', shellSpeed: 0 });
+            enemies.push({ x: 1750, y: 256, w: 24, h: 24, type: 'goomba', dir: -1, alive: true, state: 'walking', shellSpeed: 0 });
+            enemies.push({ x: 2300, y: 256, w: 24, h: 24, type: 'koopa', dir: -1, alive: true, state: 'walking', shellSpeed: 0 });
+
+            caveExitPipe = { x: 2600, y: 210, w: 48, h: 70 };
         }
 
         function handlePlayerDeath() {
@@ -732,6 +767,21 @@
             dustParticles.forEach(p => { p.life--; p.y -= 0.3; });
             dustParticles = dustParticles.filter(p => p.life > 0);
 
+            // Cập nhật góc quay Lửa Xoay (Firebars)
+            firebars.forEach(fb => {
+                fb.angle += fb.speed;
+                let steps = 5;
+                for (let i = 1; i <= steps; i++) {
+                    let fx = fb.cx + Math.cos(fb.angle) * (i * (fb.length / steps));
+                    let fy = fb.cy + Math.sin(fb.angle) * (i * (fb.length / steps));
+
+                    if (mario.x < fx + 6 && mario.x + mario.w > fx - 6 &&
+                        mario.y < fy + 6 && mario.y + mario.h > fy - 6) {
+                        if (mario.starTimer === 0) handlePlayerDeath();
+                    }
+                }
+            });
+
             if (horizontalPipe && !isUnderground) {
                 if (mario.x < horizontalPipe.x + horizontalPipe.w && mario.x + mario.w > horizontalPipe.x &&
                     mario.y + mario.h > horizontalPipe.y && mario.y < horizontalPipe.y + horizontalPipe.h) {
@@ -760,7 +810,7 @@
             }
 
             pipes.forEach(p => {
-                if (mario.x < p.x + p.w && mario.x + mario.w > p.x && mario.y + mario.h > p.y) {
+                if (!p.isTop && mario.x < p.x + p.w && mario.x + mario.w > p.x && mario.y + mario.h > p.y) {
                     if (mario.dx > 0) mario.x = p.x - mario.w;
                     if (mario.dx < 0) mario.x = p.x + p.w;
                 }
@@ -801,7 +851,7 @@
             mario.y += mario.dy;
             mario.isGrounded = false;
 
-            let overGap = !isUnderground && gaps.some(g => mario.x + 12 >= g.x && mario.x + 12 <= g.x + g.w);
+            let overGap = gaps.some(g => mario.x + 12 >= g.x && mario.x + 12 <= g.x + g.w);
             if (overGap && mario.y + mario.h >= 280) {
                 if (mario.y > 400) handlePlayerDeath();
             } else if (mario.y + mario.h >= 280) {
@@ -811,7 +861,7 @@
             }
 
             pipes.forEach(p => {
-                if (mario.x + mario.w > p.x && mario.x < p.x + p.w && mario.y + mario.h >= p.y && mario.y + mario.h <= p.y + 12 && mario.dy >= 0) {
+                if (!p.isTop && mario.x + mario.w > p.x && mario.x < p.x + p.w && mario.y + mario.h >= p.y && mario.y + mario.h <= p.y + 12 && mario.dy >= 0) {
                     mario.y = p.y - mario.h;
                     mario.dy = 0;
                     mario.isGrounded = true;
@@ -1050,7 +1100,7 @@
             }
 
             for (let x = 0; x < worldWidth; x += 24) {
-                let inGap = !isUnderground && gaps.some(g => x >= g.x && x < g.x + g.w);
+                let inGap = gaps.some(g => x >= g.x && x < g.x + g.w);
                 if (!inGap) {
                     ctx.fillStyle = isUnderground ? "#008888" : "#c84c0c";
                     ctx.fillRect(x, 280, 24, 80);
@@ -1064,6 +1114,21 @@
 
             ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
             dustParticles.forEach(p => ctx.fillRect(p.x, p.y, p.size, p.size));
+
+            // Vẽ Lửa Xoay (Firebars)
+            firebars.forEach(fb => {
+                ctx.fillStyle = "#fc9838";
+                ctx.fillRect(fb.cx - 6, fb.cy - 6, 12, 12);
+                let steps = 5;
+                for (let i = 1; i <= steps; i++) {
+                    let fx = fb.cx + Math.cos(fb.angle) * (i * (fb.length / steps));
+                    let fy = fb.cy + Math.sin(fb.angle) * (i * (fb.length / steps));
+                    ctx.fillStyle = i % 2 === 0 ? "#e40058" : "#f8d800";
+                    ctx.beginPath();
+                    ctx.arc(fx, fy, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
 
             if (horizontalPipe && !isUnderground) {
                 ctx.fillStyle = "#00a800";
