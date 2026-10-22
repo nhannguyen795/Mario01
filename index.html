@@ -3,49 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Super Mario Bros - Fullscreen Mobile Touch Fixed</title>
+    <title>Super Mario Bros - Auto Landscape Edition</title>
     <style>
         * { box-sizing: border-box; touch-action: none; user-select: none; }
-        body { margin: 0; padding: 5px; background: #000; text-align: center; font-family: 'Courier New', Courier, monospace; color: #fff; }
+        html, body { width: 100%; height: 100%; margin: 0; padding: 0; background: #000; overflow: hidden; font-family: 'Courier New', Courier, monospace; color: #fff; }
         
         .game-wrapper {
             position: relative;
             width: 100%;
-            max-width: 900px;
+            height: 100vh;
+            max-width: 960px;
+            max-height: 540px;
             margin: 0 auto;
             background: #5c94fc;
-            border: 4px solid #fff;
-            border-radius: 8px;
-            box-shadow: 0 0 25px rgba(255,255,255,0.5);
-            overflow: hidden;
+            border: 2px solid #fff;
+            box-shadow: 0 0 20px rgba(255,255,255,0.3);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            overflow: hidden;
         }
 
-        /* Khi bấm Phóng to trên điện thoại */
+        /* Tối ưu khi Phóng to (Fullscreen) */
         .game-wrapper:fullscreen {
             max-width: 100vw;
+            max-height: 100vh;
             width: 100vw;
             height: 100vh;
             border: none;
             border-radius: 0;
-            padding-bottom: 10px;
         }
 
         canvas {
             display: block;
             width: 100%;
-            height: auto;
-            aspect-ratio: 16 / 9;
+            height: calc(100% - 75px);
+            object-fit: contain;
             image-rendering: pixelated;
             image-rendering: crisp-edges;
-            flex-shrink: 1;
-        }
-
-        .game-wrapper:fullscreen canvas {
-            max-height: calc(100vh - 110px);
-            object-fit: contain;
+            background: #5c94fc;
         }
         
         .overlay {
@@ -57,10 +53,10 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 10;
+            z-index: 20;
         }
-        .overlay h1 { margin: 0 0 8px 0; color: #fff; text-shadow: 3px 3px #d80000; font-size: clamp(22px, 5vw, 34px); }
-        .overlay h3 { margin: 4px 0 12px 0; font-size: clamp(12px, 3vw, 16px); color: #f8d800; text-shadow: 1px 1px #000; }
+        .overlay h1 { margin: 0 0 8px 0; color: #fff; text-shadow: 3px 3px #d80000; font-size: clamp(20px, 4vw, 32px); }
+        .overlay h3 { margin: 4px 0 12px 0; font-size: clamp(12px, 2.5vw, 16px); color: #f8d800; text-shadow: 1px 1px #000; }
         
         #transitionOverlay {
             display: none;
@@ -86,45 +82,50 @@
         }
         .modal-box {
             background: #111;
-            border: 3px solid #fff;
+            border: 2px solid #fff;
             border-radius: 8px;
-            padding: 15px;
+            padding: 12px;
             width: 90%;
-            max-width: 420px;
+            max-width: 380px;
             max-height: 85vh;
             overflow-y: auto;
             text-align: center;
         }
-        .modal-box h2 { color: #f8d800; margin-top: 0; font-size: 20px; }
+        .modal-box h2 { color: #f8d800; margin-top: 0; font-size: 18px; }
         .shop-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
             background: #222;
-            border: 2px solid #444;
-            padding: 8px 12px;
-            margin: 6px 0;
+            border: 1px solid #444;
+            padding: 6px 10px;
+            margin: 5px 0;
             border-radius: 4px;
-            font-size: 13px;
+            font-size: 12px;
+        }
+
+        /* Nút chức năng ở góc trên màn hình */
+        .header-btn-bar {
+            position: absolute;
+            top: 6px;
+            right: 8px;
+            z-index: 15;
+            display: flex;
+            gap: 6px;
         }
 
         .game-btn-corner {
-            position: absolute;
-            top: 10px;
-            z-index: 15;
-            background: rgba(0, 0, 0, 0.6);
-            border: 2px solid #fff;
+            background: rgba(0, 0, 0, 0.65);
+            border: 1.5px solid #fff;
             color: #fff;
-            padding: 5px 10px;
-            font-size: 14px;
+            padding: 4px 8px;
+            font-size: 12px;
             font-family: inherit;
             font-weight: bold;
             border-radius: 4px;
             cursor: pointer;
         }
-        #btnShopCorner { left: 10px; }
-        #btnSettingsCorner { right: 10px; }
-        #btnFullscreenCorner { right: 110px; background: rgba(0, 168, 0, 0.8); }
+        #btnFullscreenCorner { background: rgba(0, 168, 0, 0.85); }
 
         #deathOverlay {
             display: none;
@@ -134,36 +135,36 @@
         #deathOverlay h1 {
             color: #d80000;
             text-shadow: 3px 3px #550000;
-            font-size: clamp(30px, 7vw, 50px);
-            letter-spacing: 3px;
+            font-size: clamp(28px, 6vw, 44px);
+            letter-spacing: 2px;
             animation: pulse 1s infinite alternate;
         }
-        #deathOverlay p { color: #aaa; font-size: 14px; margin-bottom: 20px; }
+        #deathOverlay p { color: #aaa; font-size: 13px; margin-bottom: 15px; }
 
-        input[type="text"] { width: 80%; max-width: 280px; padding: 10px; font-size: 15px; font-family: inherit; font-weight: bold; text-align: center; border: 2px solid #000; border-radius: 4px; margin-bottom: 10px; }
+        input[type="text"] { width: 80%; max-width: 260px; padding: 8px; font-size: 14px; font-family: inherit; font-weight: bold; text-align: center; border: 2px solid #000; border-radius: 4px; margin-bottom: 8px; }
         
-        .btn-ui { width: 80%; max-width: 280px; padding: 10px; margin: 4px 0; font-size: 14px; font-family: inherit; font-weight: bold; background: #000; color: #fff; border: 2px solid #fff; border-radius: 4px; cursor: pointer; box-shadow: 0 4px 0 #222; }
+        .btn-ui { width: 80%; max-width: 260px; padding: 8px; margin: 3px 0; font-size: 13px; font-family: inherit; font-weight: bold; background: #000; color: #fff; border: 2px solid #fff; border-radius: 4px; cursor: pointer; box-shadow: 0 3px 0 #222; }
         .btn-ui:disabled { background: #555; color: #aaa; border-color: #888; cursor: not-allowed; box-shadow: none; }
-        .btn-ui:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 #222; background: #e40058; }
+        .btn-ui:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 #222; background: #e40058; }
 
-        /* Nút điều khiển cảm ứng nằm trong game-wrapper để không bị mất khi phóng to */
+        /* Nút phím bấm cảm ứng ở đáy màn hình */
         .touch-controls {
             display: flex;
             justify-content: space-between;
             align-items: center;
             width: 100%;
-            padding: 8px 15px;
-            background: rgba(0, 0, 0, 0.4);
+            height: 70px;
+            padding: 5px 15px;
+            background: rgba(0, 0, 0, 0.7);
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
             position: relative;
-            z-index: 50;
+            z-index: 15;
+            flex-shrink: 0;
         }
-        .d-pad { display: flex; gap: 12px; }
-        .btn-ctrl { width: 75px; height: 60px; background: #f8d800; color: #000; border: 3px solid #000; font-weight: bold; font-size: 22px; border-radius: 12px; box-shadow: 0 4px 0 #000; cursor: pointer; }
-        .btn-ctrl:active { transform: translateY(4px); box-shadow: none; background: #d4b800; }
-        .btn-jump { width: 100px; background: #e75910; color: #fff; }
-
-        .pc-guide { margin-top: 8px; font-size: 13px; color: #ccc; }
-        .pc-guide span { color: #f8d800; font-weight: bold; }
+        .d-pad { display: flex; gap: 10px; }
+        .btn-ctrl { width: 65px; height: 55px; background: #f8d800; color: #000; border: 2px solid #000; font-weight: bold; font-size: 20px; border-radius: 10px; box-shadow: 0 3px 0 #000; cursor: pointer; }
+        .btn-ctrl:active { transform: translateY(3px); box-shadow: none; background: #d4b800; }
+        .btn-jump { width: 90px; background: #e75910; color: #fff; }
 
         @keyframes pulse {
             from { transform: scale(0.95); opacity: 0.8; }
@@ -174,101 +175,104 @@
 <body>
 
     <div class="game-wrapper" id="gameContainer">
-        <!-- NÚT SHOP, SETTINGS VÀ PHÓNG TO -->
-        <button id="btnShopCorner" class="game-btn-corner" style="display:none;" onclick="openShop()">🛒 Shop</button>
-        <button id="btnFullscreenCorner" class="game-btn-corner" onclick="toggleFullscreen()">⛶ Phóng to</button>
-        <button id="btnSettingsCorner" class="game-btn-corner" style="display:none;" onclick="openSettings()">⚙️ Cài đặt</button>
+        <!-- BẢN NÚT ĐIỀU HƯỚNG TRÊN CÙNG -->
+        <div class="header-btn-bar">
+            <button id="btnShopCorner" class="game-btn-corner" style="display:none;" onclick="openShop()">🛒 Shop</button>
+            <button id="btnFullscreenCorner" class="game-btn-corner" onclick="toggleFullscreen()">⛶ Phóng to</button>
+            <button id="btnSettingsCorner" class="game-btn-corner" style="display:none;" onclick="openSettings()">⚙️ Cài đặt</button>
+        </div>
 
         <div id="transitionOverlay"></div>
 
-        <!-- 1. ĐĂNG NHẬP -->
+        <!-- 1. MÀN ĐĂNG NHẬP -->
         <div id="loginScreen" class="overlay">
             <h1>SUPER MARIO BROS</h1>
-            <h3>FULLSCREEN TOUCH FIXED</h3>
+            <h3>LANDSCAPE FULLSCREEN EDITION</h3>
             <input type="text" id="userInput" placeholder="Nhập tên tài khoản...">
             <button class="btn-ui" style="background:#00a800;" onclick="handleLogin()">VÀO CHƠI (0 XU) ➔</button>
         </div>
 
-        <!-- 2. CHỌN MÀN CHƠI -->
+        <!-- 2. MÀN CHỌN ĐỘ KHÓ -->
         <div id="menuScreen" class="overlay" style="display: none;">
             <h1>CHỌN ĐỘ KHÓ</h1>
             <h3 id="userStatus">Tài khoản: Khách | 0 Xu</h3>
             <button class="btn-ui" onclick="startGame('easy')">1. EASY (3 Mạng ❤️❤️❤️)</button>
             <button class="btn-ui" id="btnNormal" onclick="startGame('normal')" disabled>2. MEDIUM (2 Mạng ❤️❤️)</button>
             <button class="btn-ui" id="btnHard" onclick="startGame('hard')" disabled>3. HARD (1 Mạng ❤️)</button>
-            <div style="display:flex; gap:10px; width:80%; max-width:280px; margin-top:6px;">
+            <div style="display:flex; gap:8px; width:80%; max-width:260px; margin-top:4px;">
                 <button class="btn-ui" style="background:#0058f8; margin:0; flex:1;" onclick="openShop()">🛒 SHOP</button>
                 <button class="btn-ui" style="background:#d80000; margin:0; flex:1;" onclick="logout()">🚪 THOÁT</button>
             </div>
         </div>
 
-        <!-- 3. MODAL CỬA HÀNG (SHOP) -->
+        <!-- 3. MODAL SHOP SKIN -->
         <div id="shopModal" class="modal-overlay">
             <div class="modal-box">
                 <h2>🛒 CỬA HÀNG SKIN CAO CẤP</h2>
-                <p id="shopUserCoins" style="color:#f8d800; font-size:14px; margin-bottom:10px;">💰 Xu của bạn: 0</p>
+                <p id="shopUserCoins" style="color:#f8d800; font-size:13px; margin-bottom:8px;">💰 Xu của bạn: 0</p>
                 
                 <div class="shop-item">
                     <span>🔴 Mario Đỏ Mặc Định</span>
-                    <button class="btn-ui" style="width:95px; padding:6px; font-size:12px;" id="skinDefaultBtn" onclick="selectSkin('default')">Đang dùng</button>
+                    <button class="btn-ui" style="width:85px; padding:4px; font-size:11px;" id="skinDefaultBtn" onclick="selectSkin('default')">Đang dùng</button>
                 </div>
                 <div class="shop-item">
                     <span>🟡 Minion HD Pixel</span>
-                    <button class="btn-ui" style="width:95px; padding:6px; font-size:12px;" id="skinMinionBtn" onclick="buyOrSelectSkin('minion', 50)">50 🪙</button>
+                    <button class="btn-ui" style="width:85px; padding:4px; font-size:11px;" id="skinMinionBtn" onclick="buyOrSelectSkin('minion', 50)">50 🪙</button>
                 </div>
                 <div class="shop-item">
                     <span>🔴 Among Us Red HD</span>
-                    <button class="btn-ui" style="width:95px; padding:6px; font-size:12px;" id="skinAmongUsBtn" onclick="buyOrSelectSkin('amongus', 60)">60 🪙</button>
+                    <button class="btn-ui" style="width:85px; padding:4px; font-size:11px;" id="skinAmongUsBtn" onclick="buyOrSelectSkin('amongus', 60)">60 🪙</button>
                 </div>
                 <div class="shop-item">
                     <span>🧪 Senku (Dr. Stone) HD</span>
-                    <button class="btn-ui" style="width:95px; padding:6px; font-size:12px;" id="skinSenkuBtn" onclick="buyOrSelectSkin('senku', 70)">70 🪙</button>
+                    <button class="btn-ui" style="width:85px; padding:4px; font-size:11px;" id="skinSenkuBtn" onclick="buyOrSelectSkin('senku', 70)">70 🪙</button>
                 </div>
                 <div class="shop-item">
                     <span>🧟 Zombie (PvZ) HD</span>
-                    <button class="btn-ui" style="width:95px; padding:6px; font-size:12px;" id="skinZombieBtn" onclick="buyOrSelectSkin('zombie', 80)">80 🪙</button>
+                    <button class="btn-ui" style="width:85px; padding:4px; font-size:11px;" id="skinZombieBtn" onclick="buyOrSelectSkin('zombie', 80)">80 🪙</button>
                 </div>
                 <div class="shop-item">
                     <span>🌌 Jotaro Kujo (JoJo) HD</span>
-                    <button class="btn-ui" style="width:95px; padding:6px; font-size:12px;" id="skinJotaroBtn" onclick="buyOrSelectSkin('jotaro', 100)">100 🪙</button>
+                    <button class="btn-ui" style="width:85px; padding:4px; font-size:11px;" id="skinJotaroBtn" onclick="buyOrSelectSkin('jotaro', 100)">100 🪙</button>
                 </div>
 
-                <button class="btn-ui" style="background:#555; margin-top:12px;" onclick="closeShop()">ĐÓNG ✖</button>
+                <button class="btn-ui" style="background:#555; margin-top:8px;" onclick="closeShop()">ĐÓNG ✖</button>
             </div>
         </div>
 
-        <!-- 4. MODAL CÀI ĐẶT (SETTINGS) -->
+        <!-- 4. MODAL CÀI ĐẶT -->
         <div id="settingsModal" class="modal-overlay">
             <div class="modal-box">
                 <h2>⚙️ CÀI ĐẶT TRÒ CHƠI</h2>
-                <div style="margin: 15px 0;">
-                    <label style="font-size:14px; cursor:pointer;">
-                        <input type="checkbox" id="soundToggle" checked onchange="toggleSound()" style="transform: scale(1.3); margin-right: 8px;"> Bật Âm Thanh BGM & SFX
+                <div style="margin: 12px 0;">
+                    <label style="font-size:13px; cursor:pointer;">
+                        <input type="checkbox" id="soundToggle" checked onchange="toggleSound()" style="transform: scale(1.2); margin-right: 6px;"> Bật Âm Thanh BGM & SFX
                     </label>
                 </div>
                 <button class="btn-ui" style="background:#d80000;" onclick="logoutFromSettings()">ĐỔI TÀI KHOẢN / ĐĂNG XUẤT</button>
-                <button class="btn-ui" style="background:#555; margin-top:8px;" onclick="closeSettings()">TIẾP TỤC CHƠI ➔</button>
+                <button class="btn-ui" style="background:#555; margin-top:6px;" onclick="closeSettings()">TIẾP TỤC CHƠI ➔</button>
             </div>
         </div>
 
-        <!-- 5. MÀN HÌNH CHẾT (YOU DIE) -->
+        <!-- 5. MÀN CHẾT -->
         <div id="deathOverlay" class="overlay">
             <h1>YOU DIE 💀</h1>
             <p>Mất sạch xu thu thập ở màn này!</p>
             <button class="btn-ui" style="background:#d80000; border-color:#fff;" onclick="showMenu()">THỬ LẠI ↺</button>
         </div>
 
-        <!-- 6. MÀN HÌNH CHIẾN THẮNG -->
+        <!-- 6. MÀN WIN -->
         <div id="winScreen" class="overlay" style="display: none; background: rgba(0,0,0,0.95);">
             <h1 style="color:#f8d800;">STAGE CLEAR! 🚩</h1>
             <h3 id="winCoinsEarned">🪙 +0 Xu kiếm được</h3>
             <h3 id="winTotalCoins" style="color:#fff;">💰 Tổng xu tài khoản: 0</h3>
-            <button class="btn-ui" style="background:#00a800; margin-top:15px;" onclick="showMenu()">TIẾP TỤC ➔</button>
+            <button class="btn-ui" style="background:#00a800; margin-top:12px;" onclick="showMenu()">TIẾP TỤC ➔</button>
         </div>
 
+        <!-- CANVAS GAME -->
         <canvas id="canvas" width="640" height="360"></canvas>
 
-        <!-- NÚT ĐIỀU KHIỂN CẢM ỨNG ĐƯỢC CHUYỂN VÀO TRONG GAME-WRAPPER -->
+        <!-- BỘ ĐIỀU KHIỂN NÚT BẤM CẢM ỨNG -->
         <div class="touch-controls">
             <div class="d-pad">
                 <button class="btn-ctrl" id="btnLeft" data-key="left">◄</button>
@@ -276,10 +280,6 @@
             </div>
             <button class="btn-ctrl btn-jump" id="btnJump" data-key="jump">NHẢY</button>
         </div>
-    </div>
-
-    <div class="pc-guide">
-        💻 Máy tính: Di chuyển <span>A / D</span> hoặc <span>Mũi tên</span> | Nhảy <span>W / Space</span>
     </div>
 
     <script>
@@ -290,22 +290,33 @@
         let soundEnabled = true;
         let db = JSON.parse(localStorage.getItem("mario_ultrahd_db") || "{}");
 
-        function toggleFullscreen() {
+        // HÀM TỰ ĐỘNG BẬT TOÀN MÀN HÌNH VÀ ÉP XOAY MÀN HÌNH NGANG (LANDSCAPE)
+        async function toggleFullscreen() {
             let container = document.getElementById("gameContainer");
             let btn = document.getElementById("btnFullscreenCorner");
 
             if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-                if (container.requestFullscreen) {
-                    container.requestFullscreen();
-                } else if (container.webkitRequestFullscreen) {
-                    container.webkitRequestFullscreen();
-                }
+                try {
+                    if (container.requestFullscreen) {
+                        await container.requestFullscreen();
+                    } else if (container.webkitRequestFullscreen) {
+                        await container.webkitRequestFullscreen();
+                    }
+                    
+                    // Thử khóa xoay màn hình ngang nếu trình duyệt hỗ trợ
+                    if (screen.orientation && screen.orientation.lock) {
+                        await screen.orientation.lock("landscape").catch(() => {});
+                    }
+                } catch (e) {}
                 btn.innerText = "🗗 Thu nhỏ";
             } else {
                 if (document.exitFullscreen) {
                     document.exitFullscreen();
                 } else if (document.webkitExitFullscreen) {
                     document.webkitExitFullscreen();
+                }
+                if (screen.orientation && screen.orientation.unlock) {
+                    screen.orientation.unlock();
                 }
                 btn.innerText = "⛶ Phóng to";
             }
@@ -1315,11 +1326,11 @@
 
             if (isPlaying) {
                 ctx.fillStyle = "#fff";
-                ctx.font = "bold 14px monospace";
+                ctx.font = "bold 13px monospace";
                 let heartStr = "❤️".repeat(lives);
-                ctx.fillText(`MẠNG: ${heartStr}`, 15, 25);
-                ctx.fillText(`COINS: ${levelCoins}`, 200, 25);
-                ctx.fillText(`MODE: ${mode.toUpperCase()}`, 480, 25);
+                ctx.fillText(`MẠNG: ${heartStr}`, 10, 20);
+                ctx.fillText(`COINS: ${levelCoins}`, 140, 20);
+                ctx.fillText(`MODE: ${mode.toUpperCase()}`, 270, 20);
             }
         }
 
