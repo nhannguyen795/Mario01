@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Super Mario Bros - Auto Landscape Edition</title>
+    <title>Super Mario Bros - Redeem Code Edition</title>
     <style>
         * { box-sizing: border-box; touch-action: none; user-select: none; }
         html, body { width: 100%; height: 100%; margin: 0; padding: 0; background: #000; overflow: hidden; font-family: 'Courier New', Courier, monospace; color: #fff; }
@@ -24,7 +24,6 @@
             overflow: hidden;
         }
 
-        /* Tối ưu khi Phóng to (Fullscreen) */
         .game-wrapper:fullscreen {
             max-width: 100vw;
             max-height: 100vh;
@@ -104,7 +103,6 @@
             font-size: 12px;
         }
 
-        /* Nút chức năng ở góc trên màn hình */
         .header-btn-bar {
             position: absolute;
             top: 6px;
@@ -147,7 +145,34 @@
         .btn-ui:disabled { background: #555; color: #aaa; border-color: #888; cursor: not-allowed; box-shadow: none; }
         .btn-ui:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 #222; background: #e40058; }
 
-        /* Nút phím bấm cảm ứng ở đáy màn hình */
+        /* Giao diện khung nhập code trong Settings */
+        .code-box {
+            background: #222;
+            border: 1px dashed #f8d800;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 6px;
+        }
+        .code-input-group {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+            margin-top: 5px;
+        }
+        .code-input-group input {
+            width: 60%;
+            margin-bottom: 0;
+            font-size: 12px;
+            padding: 6px;
+        }
+        .code-input-group button {
+            width: 35%;
+            margin: 0;
+            padding: 6px;
+            font-size: 12px;
+            background: #00a800;
+        }
+
         .touch-controls {
             display: flex;
             justify-content: space-between;
@@ -175,7 +200,6 @@
 <body>
 
     <div class="game-wrapper" id="gameContainer">
-        <!-- BẢN NÚT ĐIỀU HƯỚNG TRÊN CÙNG -->
         <div class="header-btn-bar">
             <button id="btnShopCorner" class="game-btn-corner" style="display:none;" onclick="openShop()">🛒 Shop</button>
             <button id="btnFullscreenCorner" class="game-btn-corner" onclick="toggleFullscreen()">⛶ Phóng to</button>
@@ -184,15 +208,13 @@
 
         <div id="transitionOverlay"></div>
 
-        <!-- 1. MÀN ĐĂNG NHẬP -->
         <div id="loginScreen" class="overlay">
             <h1>SUPER MARIO BROS</h1>
-            <h3>LANDSCAPE FULLSCREEN EDITION</h3>
+            <h3>REDEEM CODE EDITION</h3>
             <input type="text" id="userInput" placeholder="Nhập tên tài khoản...">
             <button class="btn-ui" style="background:#00a800;" onclick="handleLogin()">VÀO CHƠI (0 XU) ➔</button>
         </div>
 
-        <!-- 2. MÀN CHỌN ĐỘ KHÓ -->
         <div id="menuScreen" class="overlay" style="display: none;">
             <h1>CHỌN ĐỘ KHÓ</h1>
             <h3 id="userStatus">Tài khoản: Khách | 0 Xu</h3>
@@ -205,7 +227,6 @@
             </div>
         </div>
 
-        <!-- 3. MODAL SHOP SKIN -->
         <div id="shopModal" class="modal-overlay">
             <div class="modal-box">
                 <h2>🛒 CỬA HÀNG SKIN CAO CẤP</h2>
@@ -240,28 +261,36 @@
             </div>
         </div>
 
-        <!-- 4. MODAL CÀI ĐẶT -->
+        <!-- MODAL CÀI ĐẶT BỔ SUNG KHUNG NHẬP CODE -->
         <div id="settingsModal" class="modal-overlay">
             <div class="modal-box">
                 <h2>⚙️ CÀI ĐẶT TRÒ CHƠI</h2>
-                <div style="margin: 12px 0;">
+                <div style="margin: 10px 0;">
                     <label style="font-size:13px; cursor:pointer;">
                         <input type="checkbox" id="soundToggle" checked onchange="toggleSound()" style="transform: scale(1.2); margin-right: 6px;"> Bật Âm Thanh BGM & SFX
                     </label>
                 </div>
+
+                <!-- Ô KHUNG NHẬP CODE QUÀ TẶNG -->
+                <div class="code-box">
+                    <span style="color:#f8d800; font-size:12px; font-weight:bold;">🎁 NHẬP MÃ QUÀ TẶNG</span>
+                    <div class="code-input-group">
+                        <input type="text" id="promoCodeInput" placeholder="Nhập code...">
+                        <button class="btn-ui" onclick="redeemCode()">XÁC NHẬN</button>
+                    </div>
+                </div>
+
                 <button class="btn-ui" style="background:#d80000;" onclick="logoutFromSettings()">ĐỔI TÀI KHOẢN / ĐĂNG XUẤT</button>
                 <button class="btn-ui" style="background:#555; margin-top:6px;" onclick="closeSettings()">TIẾP TỤC CHƠI ➔</button>
             </div>
         </div>
 
-        <!-- 5. MÀN CHẾT -->
         <div id="deathOverlay" class="overlay">
             <h1>YOU DIE 💀</h1>
             <p>Mất sạch xu thu thập ở màn này!</p>
             <button class="btn-ui" style="background:#d80000; border-color:#fff;" onclick="showMenu()">THỬ LẠI ↺</button>
         </div>
 
-        <!-- 6. MÀN WIN -->
         <div id="winScreen" class="overlay" style="display: none; background: rgba(0,0,0,0.95);">
             <h1 style="color:#f8d800;">STAGE CLEAR! 🚩</h1>
             <h3 id="winCoinsEarned">🪙 +0 Xu kiếm được</h3>
@@ -269,10 +298,8 @@
             <button class="btn-ui" style="background:#00a800; margin-top:12px;" onclick="showMenu()">TIẾP TỤC ➔</button>
         </div>
 
-        <!-- CANVAS GAME -->
         <canvas id="canvas" width="640" height="360"></canvas>
 
-        <!-- BỘ ĐIỀU KHIỂN NÚT BẤM CẢM ỨNG -->
         <div class="touch-controls">
             <div class="d-pad">
                 <button class="btn-ctrl" id="btnLeft" data-key="left">◄</button>
@@ -290,7 +317,6 @@
         let soundEnabled = true;
         let db = JSON.parse(localStorage.getItem("mario_ultrahd_db") || "{}");
 
-        // HÀM TỰ ĐỘNG BẬT TOÀN MÀN HÌNH VÀ ÉP XOAY MÀN HÌNH NGANG (LANDSCAPE)
         async function toggleFullscreen() {
             let container = document.getElementById("gameContainer");
             let btn = document.getElementById("btnFullscreenCorner");
@@ -302,8 +328,6 @@
                     } else if (container.webkitRequestFullscreen) {
                         await container.webkitRequestFullscreen();
                     }
-                    
-                    // Thử khóa xoay màn hình ngang nếu trình duyệt hỗ trợ
                     if (screen.orientation && screen.orientation.lock) {
                         await screen.orientation.lock("landscape").catch(() => {});
                     }
@@ -331,10 +355,12 @@
                     normalUnlocked: false, 
                     hardUnlocked: false, 
                     equippedSkin: 'default',
-                    unlockedSkins: ['default'] 
+                    unlockedSkins: ['default'],
+                    redeemedCodes: [] 
                 };
                 localStorage.setItem("mario_ultrahd_db", JSON.stringify(db));
             }
+            if (!db[name].redeemedCodes) db[name].redeemedCodes = [];
             currentUser = name;
             showMenu();
         }
@@ -436,11 +462,39 @@
         }
 
         function openSettings() {
+            document.getElementById("promoCodeInput").value = "";
             document.getElementById("settingsModal").style.display = "flex";
         }
 
         function closeSettings() {
             document.getElementById("settingsModal").style.display = "none";
+        }
+
+        // HÀM XỬ LÝ NHẬP CODE "VIỆT NAM" ĐỂ NHẬN 500 XU
+        function redeemCode() {
+            let code = document.getElementById("promoCodeInput").value.trim().toLowerCase();
+            let u = db[currentUser];
+
+            if (!code) return alert("Vui lòng nhập mã code!");
+
+            // Chuẩn hóa loại bỏ dấu tiếng Việt để tránh gõ nhầm font
+            let normalizedCode = code.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "");
+
+            if (normalizedCode === "vietnam") {
+                if (u.redeemedCodes && u.redeemedCodes.includes("vietnam")) {
+                    alert("Tài khoản của bạn đã nhận phần thưởng code này rồi!");
+                } else {
+                    if (!u.redeemedCodes) u.redeemedCodes = [];
+                    u.redeemedCodes.push("vietnam");
+                    u.coins += 500;
+                    localStorage.setItem("mario_ultrahd_db", JSON.stringify(db));
+                    playSound('coin');
+                    alert("🎉 BẠN ĐÃ NHẬN THÀNH CÔNG +500 XU CỦA CODE VIỆT NAM!");
+                    document.getElementById("promoCodeInput").value = "";
+                }
+            } else {
+                alert("Mã Code không chính xác hoặc đã hết hạn!");
+            }
         }
 
         function toggleSound() {
